@@ -16,7 +16,7 @@ venv/
 
 # RAG local store / ingested corpus artifacts
 /codejudge-ai/corpus/
-/codejudge-ai/rag/store/
+/codejudge-ai/codejudge_ai/rag/store/
 *.npy
 
 # IDE / OS

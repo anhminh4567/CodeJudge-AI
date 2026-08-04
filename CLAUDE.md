@@ -24,7 +24,10 @@ Guidance for Claude Code when working in this repository.
 ## What this project is
 
 `CodeJudge-AI` is the **AI layer** on top of the existing `CodeJudge` online judge.
-Full design is in [codejudge-ai-final-plan.md](codejudge-ai-final-plan.md). Summary:
+Full design is in [codejudge-ai-final-plan.md](codejudge-ai-final-plan.md); the
+build roadmap (phases, steps, current status, commit map) is in
+[DEVELOPMENT_PHASES.md](DEVELOPMENT_PHASES.md); a plain-language tour of the Python
+project is in [codejudge-ai/OVERVIEW.md](codejudge-ai/OVERVIEW.md). Summary:
 
 Three capabilities the AI layer provides:
 1. **Answer visitor questions** — RAG over site docs + ingested PDFs/Word, plus

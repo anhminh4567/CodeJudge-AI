@@ -20,7 +20,7 @@ model-driven tool selection, MCP, and RAG working together.
 |------|------|-------|--------|
 | S0 | MCP server scaffold + `get_problem_spec` tool | `codejudge-mcp/` | ✅ (commit A) |
 | S1 | Docs sync script (copy CodeJudge Markdown → `corpus/`) | `codejudge-ai/scripts/sync_docs.py` | ✅ |
-| S2 | RAG ingest pipeline (extract → chunk → embed → flat-file store) | `codejudge-ai/rag/*`, `scripts/ingest.py` | ✅ |
+| S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge-ai/rag/*`, `scripts/ingest.py` | ✅ |
 | S2v | Verify live embedding + a real query end-to-end | needs `GEMINI_API_KEY` | ⬜ |
 | S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge-ai/agent/` (new) | ⬜ |
 | S4 | Add the live MCP tool so the agent *chooses* RAG vs `get_problem_spec` | agent wiring + `run_poc.py` | ⬜ **← PoC done here** |

@@ -1,7 +1,7 @@
 """Query-time retrieval: the seam the agent calls as `search_ingested_docs`.
 
 The store is loaded lazily and cached, so the first query pays the load cost and
-subsequent queries are just an embed call + a matrix multiply.
+subsequent queries are just an embed call + an in-memory similarity search.
 """
 
 from __future__ import annotations
@@ -9,7 +9,6 @@ from __future__ import annotations
 from functools import lru_cache
 
 from .. import config
-from . import embed
 from .store import Hit, VectorStore
 
 
@@ -23,5 +22,4 @@ def search(query: str, top_k: int | None = None) -> list[Hit]:
     if not query or not query.strip():
         return []
     store = _load_store()
-    query_vector = embed.embed_query(query)
-    return store.search(query_vector, top_k or config.TOP_K)
+    return store.search(query, top_k or config.TOP_K)

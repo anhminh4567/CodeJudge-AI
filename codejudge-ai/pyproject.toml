@@ -4,11 +4,12 @@ version = "0.1.0"
 description = "AI layer for CodeJudge: document RAG + ADK agent(s) over codejudge-mcp."
 requires-python = ">=3.11"
 dependencies = [
-    "google-genai>=1.0.0",      # Gemini client: embeddings + generation
-    "numpy>=1.26",              # flat-file vector store + cosine similarity
-    "pypdf>=4.0",               # PDF text extraction
-    "python-docx>=1.1",         # Word (.docx) text extraction
-    "python-dotenv>=1.0",       # load .env for local runs
+    "google-genai>=1.0.0",             # Gemini client: embeddings + generation
+    "langchain-core>=0.3",             # InMemoryVectorStore (in-memory, no service)
+    "langchain-text-splitters>=0.3",   # battle-tested recursive chunker
+    "pypdf>=4.0",                      # PDF text extraction
+    "python-docx>=1.1",                # Word (.docx) text extraction
+    "python-dotenv>=1.0",              # load .env for local runs
 ]
 
 [project.optional-dependencies]

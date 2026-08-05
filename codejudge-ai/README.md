@@ -16,9 +16,9 @@ codejudge_ai/
 ├── config.py            # env-driven config (paths, models, chunking)
 ├── rag/
 │   ├── extract.py       # md/txt/pdf/docx -> plain text
-│   ├── chunk.py         # recursive character splitter (no LangChain dep)
-│   ├── embed.py         # Gemini gemini-embedding-001 (doc vs query task types)
-│   ├── store.py         # flat-file vector store (chunks.json + vectors.npy) + cosine search
+│   ├── chunk.py         # LangChain RecursiveCharacterTextSplitter (thin wrapper)
+│   ├── embed.py         # Gemini gemini-embedding-001 (doc vs query task types) + LangChain adapter
+│   ├── store.py         # InMemoryVectorStore (in-memory, saves to store.json) + similarity search
 │   └── search.py        # search(query) -> top-k hits  (the agent's RAG tool seam)
 └── scripts/
     ├── sync_docs.py     # S1: copy CodeJudge/docs Markdown into ./corpus (READ-ONLY source)

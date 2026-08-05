@@ -1,29 +1,30 @@
-"""A flat-file vector store: chunk metadata as JSON + vectors as a .npy matrix.
+"""The vector store: LangChain's `InMemoryVectorStore` with save/load.
 
-No vector DB (D6). For a personal-scale doc set, retrieval is just cosine
-similarity over a modest matrix — a few lines of numpy — and a flat file is far
-less operational overhead than a managed DB for zero accuracy loss. Swapping in
-Chroma/Qdrant later means reimplementing this one module behind the same API.
+In-memory (no service to run) but library-backed rather than hand-rolled — it
+holds the vectors in RAM, does brute-force cosine similarity, and persists to a
+single JSON file. Perfect for a personal-scale doc set (D6: no vector DB). If we
+ever outgrow it, swapping in Chroma/Qdrant means changing only this file, because
+everything above talks to the small `VectorStore`/`Chunk`/`Hit` API here.
 """
 
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
+from langchain_core.vectorstores import InMemoryVectorStore
 
-_CHUNKS_FILE = "chunks.json"
-_VECTORS_FILE = "vectors.npy"
+from .embed import GeminiEmbeddings
+
+_STORE_FILE = "store.json"
 
 
 @dataclass
 class Chunk:
     """One retrievable unit: a slice of a source document plus provenance."""
 
-    id: str          # stable id, e.g. "WARM_POOL.md#3"
-    source: str      # source document name/relative path
+    id: str           # stable id, e.g. "codejudge-docs/WARM_POOL.md#3"
+    source: str       # source document (relative path within the corpus)
     chunk_index: int  # position within the source
     text: str
 
@@ -36,62 +37,58 @@ class Hit:
     score: float
 
 
-def save(store_dir: Path, chunks: list[Chunk], vectors: list[list[float]]) -> None:
-    """Persist chunks + their embeddings. Overwrites any existing store."""
-    if len(chunks) != len(vectors):
-        raise ValueError(f"chunks ({len(chunks)}) and vectors ({len(vectors)}) length mismatch")
-    store_dir.mkdir(parents=True, exist_ok=True)
-    (store_dir / _CHUNKS_FILE).write_text(
-        json.dumps([asdict(c) for c in chunks], ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    matrix = np.array(vectors, dtype=np.float32) if vectors else np.zeros((0, 0), dtype=np.float32)
-    np.save(store_dir / _VECTORS_FILE, matrix)
-
-
-def exists(store_dir: Path) -> bool:
-    return (store_dir / _CHUNKS_FILE).exists() and (store_dir / _VECTORS_FILE).exists()
-
-
 class VectorStore:
-    """An in-memory view of the flat-file store, loaded once for querying."""
+    """Thin wrapper over InMemoryVectorStore that speaks in Chunks and Hits."""
 
-    def __init__(self, chunks: list[Chunk], matrix: np.ndarray):
-        self._chunks = chunks
-        # Pre-normalize rows so query-time cosine similarity is a single dot product.
-        self._normalized = _normalize_rows(matrix)
+    def __init__(self, inner: InMemoryVectorStore):
+        self._inner = inner
+
+    @classmethod
+    def build(cls, chunks: list[Chunk]) -> "VectorStore":
+        """Embed and index chunks. The embedding happens inside add_texts via
+        GeminiEmbeddings, so this is the step that calls Gemini."""
+        inner = InMemoryVectorStore(GeminiEmbeddings())
+        inner.add_texts(
+            texts=[c.text for c in chunks],
+            metadatas=[{"id": c.id, "source": c.source, "chunk_index": c.chunk_index} for c in chunks],
+            ids=[c.id for c in chunks],
+        )
+        return cls(inner)
+
+    def save(self, store_dir: Path) -> None:
+        store_dir.mkdir(parents=True, exist_ok=True)
+        self._inner.dump(str(store_dir / _STORE_FILE))
 
     @classmethod
     def load(cls, store_dir: Path) -> "VectorStore":
-        if not exists(store_dir):
+        path = store_dir / _STORE_FILE
+        if not path.exists():
             raise FileNotFoundError(
-                f"no vector store at {store_dir}. Run the ingest script first "
+                f"no vector store at {path}. Run the ingest script first "
                 "(python -m codejudge_ai.scripts.ingest)."
             )
-        raw = json.loads((store_dir / _CHUNKS_FILE).read_text(encoding="utf-8"))
-        chunks = [Chunk(**c) for c in raw]
-        matrix = np.load(store_dir / _VECTORS_FILE)
-        return cls(chunks, matrix)
+        inner = InMemoryVectorStore.load(str(path), GeminiEmbeddings())
+        return cls(inner)
 
     def __len__(self) -> int:
-        return len(self._chunks)
+        return len(self._inner.store)
 
-    def search(self, query_vector: list[float], top_k: int) -> list[Hit]:
-        """Return the top_k chunks by cosine similarity to query_vector."""
-        if not self._chunks:
-            return []
-        q = _normalize_rows(np.array([query_vector], dtype=np.float32))[0]
-        scores = self._normalized @ q  # cosine similarity, both sides unit-norm
-        k = min(top_k, len(self._chunks))
-        # argpartition for the top-k, then sort just those descending.
-        top_idx = np.argpartition(-scores, k - 1)[:k]
-        top_idx = top_idx[np.argsort(-scores[top_idx])]
-        return [Hit(chunk=self._chunks[i], score=float(scores[i])) for i in top_idx]
-
-
-def _normalize_rows(matrix: np.ndarray) -> np.ndarray:
-    if matrix.size == 0:
-        return matrix
-    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
-    norms[norms == 0] = 1.0  # avoid divide-by-zero on any zero vector
-    return matrix / norms
+    def search(self, query: str, top_k: int) -> list[Hit]:
+        """Return the top_k chunks by cosine similarity to `query`. The query is
+        embedded internally (RETRIEVAL_QUERY task type via GeminiEmbeddings)."""
+        results = self._inner.similarity_search_with_score(query, k=top_k)
+        hits: list[Hit] = []
+        for doc, score in results:
+            meta = doc.metadata or {}
+            hits.append(
+                Hit(
+                    chunk=Chunk(
+                        id=meta.get("id", doc.id or ""),
+                        source=meta.get("source", ""),
+                        chunk_index=meta.get("chunk_index", -1),
+                        text=doc.page_content,
+                    ),
+                    score=float(score),
+                )
+            )
+        return hits

@@ -1,7 +1,7 @@
 """S2 - Ingest the corpus into the flat-file vector store.
 
 Runs the pipeline over every supported file in the corpus:
-    extract -> chunk -> embed (Gemini) -> save (chunks.json + vectors.npy)
+    extract -> chunk -> embed (Gemini) -> save (in-memory store -> store.json)
 
 Usage:
     python -m codejudge_ai.scripts.ingest
@@ -15,8 +15,8 @@ from pathlib import Path
 
 from .. import config
 from ..rag import chunk as chunker
-from ..rag import embed, extract
-from ..rag.store import Chunk, save
+from ..rag import extract
+from ..rag.store import Chunk, VectorStore
 
 
 def collect_chunks(corpus_dir: Path) -> list[Chunk]:
@@ -63,10 +63,10 @@ def main() -> None:
         print("Dry run - skipping embedding and store write.")
         return
 
-    print(f"Embedding with {config.EMBED_MODEL} ...")
-    vectors = embed.embed_documents([c.text for c in chunks])
-    save(config.STORE_DIR, chunks, vectors)
-    print(f"Saved store to {config.STORE_DIR} ({len(chunks)} vectors).")
+    print(f"Embedding with {config.EMBED_MODEL} and indexing ...")
+    store = VectorStore.build(chunks)
+    store.save(config.STORE_DIR)
+    print(f"Saved store to {config.STORE_DIR} ({len(store)} vectors).")
 
 
 if __name__ == "__main__":

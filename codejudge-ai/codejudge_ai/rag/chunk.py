@@ -1,59 +1,29 @@
-"""A small recursive character text splitter.
+"""Chunking: split a long document into small, overlapping pieces.
 
-Same idea as LangChain's RecursiveCharacterTextSplitter, but ~40 lines and no
-dependency: try to split on the biggest natural boundary (paragraphs), and only
-fall back to finer separators when a piece is still too big. Chunks target
-`chunk_size` characters with `chunk_overlap` characters carried between them so a
-fact spanning a boundary is not lost.
+We use LangChain's `RecursiveCharacterTextSplitter` rather than hand-rolling one.
+It's the standard, well-tested implementation of "split on the biggest natural
+boundary first (paragraph), fall back to finer ones (line, sentence, word) only
+when a piece is still too big," with overlap carried between chunks so a fact
+spanning a boundary isn't lost. This module is a thin wrapper so the rest of the
+code just calls `split_text(...)` and doesn't depend on LangChain directly.
 """
 
 from __future__ import annotations
 
-# Coarse-to-fine boundaries: paragraph, line, sentence-ish, word, char.
-_SEPARATORS = ["\n\n", "\n", ". ", " ", ""]
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def split_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
-    if chunk_overlap >= chunk_size:
-        raise ValueError("chunk_overlap must be smaller than chunk_size")
+    """Split `text` into ~chunk_size-character chunks with chunk_overlap overlap.
+
+    Sizes are measured in characters (a simple, predictable proxy for tokens).
+    """
     text = text.strip()
     if not text:
         return []
-    pieces = _split_recursive(text, _SEPARATORS, chunk_size)
-    return _merge_with_overlap(pieces, chunk_size, chunk_overlap)
-
-
-def _split_recursive(text: str, separators: list[str], chunk_size: int) -> list[str]:
-    """Break `text` into atoms no larger than chunk_size where possible."""
-    if len(text) <= chunk_size:
-        return [text]
-
-    sep, *rest = separators
-    if sep == "":
-        # Hard character split: nothing finer to try.
-        return [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
-
-    out: list[str] = []
-    for part in text.split(sep):
-        if not part:
-            continue
-        part = part + sep if sep != "" else part
-        if len(part) <= chunk_size:
-            out.append(part)
-        else:
-            out.extend(_split_recursive(part, rest, chunk_size))
-    return out
-
-
-def _merge_with_overlap(pieces: list[str], chunk_size: int, chunk_overlap: int) -> list[str]:
-    """Greedily glue atoms into ~chunk_size chunks, carrying a tail of overlap."""
-    chunks: list[str] = []
-    current = ""
-    for piece in pieces:
-        if current and len(current) + len(piece) > chunk_size:
-            chunks.append(current.strip())
-            current = current[-chunk_overlap:] if chunk_overlap else ""
-        current += piece
-    if current.strip():
-        chunks.append(current.strip())
-    return [c for c in chunks if c]
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        length_function=len,
+    )
+    return [c for c in splitter.split_text(text) if c.strip()]

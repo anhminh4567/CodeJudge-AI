@@ -3,12 +3,17 @@
 Keeps everything on one provider (same API key as generation). We set the
 task_type so the model optimizes document vs. query embeddings differently,
 which measurably improves retrieval quality for the same text.
+
+`GeminiEmbeddings` adapts these functions to LangChain's `Embeddings` interface
+so the vector store (`store.py`) can drive them, without coupling our embedding
+code to LangChain.
 """
 
 from __future__ import annotations
 
 from google import genai
 from google.genai import types
+from langchain_core.embeddings import Embeddings
 
 from .. import config
 
@@ -51,3 +56,17 @@ def _embed(texts: list[str], task_type: str) -> list[list[float]]:
         )
         vectors.extend(e.values for e in resp.embeddings)
     return vectors
+
+
+class GeminiEmbeddings(Embeddings):
+    """LangChain Embeddings adapter over the functions above.
+
+    The vector store calls `embed_documents` when indexing and `embed_query`
+    when searching, so each side gets the right task_type automatically.
+    """
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return embed_documents(texts)
+
+    def embed_query(self, text: str) -> list[float]:
+        return embed_query(text)

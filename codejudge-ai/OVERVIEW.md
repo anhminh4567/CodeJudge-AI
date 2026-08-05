@@ -44,16 +44,18 @@ step. So don't look for it in the current code — it isn't there on purpose.
 | Library | Role here | Why this one |
 |---|---|---|
 | `google-genai` | Calls Gemini to make **embeddings** (vectors) | Same provider/API key we'll use for generation; the embedding model `gemini-embedding-001` is stable and GA. |
-| `numpy` | Stores vectors and does the **similarity math** | The "vector database" is literally a numpy array + one line of cosine similarity. No DB to run. |
+| `langchain-text-splitters` | **Chunks** long text into overlapping pieces | The standard, well-tested recursive splitter — no reason to hand-roll one. |
+| `langchain-core` | The in-memory **vector store** (`InMemoryVectorStore`) | Library-backed similarity search that lives in RAM and saves to one JSON file — no database service to run. |
 | `pypdf` | Reads text out of **PDF** files | Standard, lightweight PDF text extraction. |
 | `python-docx` | Reads text out of **Word** (.docx) files | Standard Word reader. |
 | `python-dotenv` | Loads your `.env` so secrets aren't hardcoded | Convenience for local runs. |
 | `google-adk` *(optional, later)* | The **agent** framework | Most mature ADK SDK; not used yet. |
 
-**What we deliberately did NOT use:** no vector database (Chroma/Qdrant/FAISS) and
-no LangChain. For a personal-scale doc set, a flat file + numpy is simpler, has
-nothing extra to install or operate, and loses no accuracy. We can swap in a real
-vector DB later by rewriting just one file (`rag/store.py`).
+**What we deliberately did NOT use:** no vector database *service* (Chroma server,
+Qdrant, etc.). For a personal-scale doc set, an in-memory store that persists to a
+single JSON file is simpler, has nothing extra to run, and loses no accuracy. We
+can swap in a real vector DB later by rewriting just one file (`rag/store.py`) —
+everything above it talks to a small `VectorStore` API, not to LangChain directly.
 
 ---
 
@@ -64,8 +66,8 @@ vector DB later by rewriting just one file (`rag/store.py`).
   here; you can also drop your own PDFs or Word docs in. It's just files on disk.
   *(Gitignored — it's data, not code.)*
 - **`store/`** (`codejudge_ai/rag/store/`) — the **processed, searchable form** of
-  the corpus: `chunks.json` (the text pieces) + `vectors.npy` (their vectors).
-  Produced by the ingest step. *(Also gitignored.)*
+  the corpus: `store.json`, holding the text pieces and their vectors together
+  (dumped by the in-memory vector store). Produced by the ingest step. *(Also gitignored.)*
 
 Flow: `corpus/` (raw docs) → **ingest** → `store/` (searchable vectors) →
 **search** returns the best pieces.
@@ -88,11 +90,11 @@ codejudge-ai/                     <- the Python project root
     │
     ├── rag/                      <- the Retrieval half of RAG
     │   ├── extract.py            <- file (md/pdf/docx) -> plain text
-    │   ├── chunk.py              <- long text -> small overlapping pieces
-    │   ├── embed.py              <- text pieces -> vectors (calls Gemini)
-    │   ├── store.py              <- save/load vectors + cosine similarity search
+    │   ├── chunk.py              <- long text -> small overlapping pieces (LangChain splitter)
+    │   ├── embed.py              <- text pieces -> vectors (calls Gemini) + LangChain adapter
+    │   ├── store.py              <- InMemoryVectorStore wrapper: build/save/load + search
     │   ├── search.py             <- search("question") -> best pieces  [agent will call this]
-    │   └── store/                <- the saved vectors live here (gitignored)
+    │   └── store/                <- the saved store.json lives here (gitignored)
     │
     └── scripts/                  <- the things you actually RUN
         ├── sync_docs.py          <- copy CodeJudge's docs into corpus/

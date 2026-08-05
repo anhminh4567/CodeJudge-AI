@@ -7,6 +7,7 @@ dependencies = [
     "google-genai>=1.0.0",             # Gemini client: embeddings + generation
     "langchain-core>=0.3",             # InMemoryVectorStore (in-memory, no service)
     "langchain-text-splitters>=0.3",   # battle-tested recursive chunker
+    "numpy>=1.26",                     # required by InMemoryVectorStore's cosine similarity
     "pypdf>=4.0",                      # PDF text extraction
     "python-docx>=1.1",                # Word (.docx) text extraction
     "python-dotenv>=1.0",              # load .env for local runs

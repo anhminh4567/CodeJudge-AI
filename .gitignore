@@ -1,5 +1,5 @@
 # Go
-/codejudge-mcp/**/*.exe
+/mcp/codejudge-mcp/**/*.exe
 *.exe
 *.test
 *.out
@@ -15,9 +15,8 @@ venv/
 .ruff_cache/
 
 # RAG local store / ingested corpus artifacts
-/codejudge-ai/corpus/
-/codejudge-ai/codejudge_ai/rag/store/
-*.npy
+/corpus/
+/codejudge_ai/rag/store/
 
 # IDE / OS
 .idea/

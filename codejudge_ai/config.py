@@ -14,13 +14,11 @@ from dotenv import load_dotenv
 
 load_dotenv()  # no-op if there is no .env; real env vars still win
 
-# Repo paths. `PACKAGE_DIR` is .../CodeJudge-AI/codejudge-ai/codejudge_ai;
-# `PROJECT_DIR` is .../CodeJudge-AI/codejudge-ai; `REPO_ROOT` is .../CodeJudge-AI.
-# Data lives under the project dir, not the package, so it is easy to gitignore
-# and never shipped inside the importable package.
+# Repo paths. `PACKAGE_DIR` is .../CodeJudge-AI/codejudge_ai; `PROJECT_DIR` is
+# the repo root .../CodeJudge-AI. Data lives under the project dir, not the
+# package, so it is easy to gitignore and never shipped inside the package.
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
-REPO_ROOT = PROJECT_DIR.parent
 
 # Where synced/ingested source documents live (S1 copies CodeJudge docs here).
 CORPUS_DIR = Path(os.getenv("CODEJUDGE_AI_CORPUS_DIR", PROJECT_DIR / "corpus"))
@@ -28,12 +26,13 @@ CORPUS_DIR = Path(os.getenv("CODEJUDGE_AI_CORPUS_DIR", PROJECT_DIR / "corpus"))
 # Where the flat-file vector store is written (S2 ingest output).
 STORE_DIR = Path(os.getenv("CODEJUDGE_AI_STORE_DIR", PACKAGE_DIR / "rag" / "store"))
 
-# Source of CodeJudge markdown docs for the sync script (S1). CodeJudge is
-# READ-ONLY to this project; the sync script only ever reads from here.
+# Source of CodeJudge markdown docs for the sync script (S1). CodeJudge is a
+# sibling of this repo and READ-ONLY to this project; the sync script only ever
+# reads from here.
 CODEJUDGE_DOCS_DIR = Path(
     os.getenv(
         "CODEJUDGE_DOCS_DIR",
-        REPO_ROOT.parent / "CodeJudge" / "docs",
+        PROJECT_DIR.parent / "CodeJudge" / "docs",
     )
 )
 

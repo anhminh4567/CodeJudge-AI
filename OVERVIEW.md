@@ -77,12 +77,13 @@ Flow: `corpus/` (raw docs) → **ingest** → `store/` (searchable vectors) →
 ## 5. Folder structure (what each file is)
 
 ```
-codejudge-ai/                     <- the Python project root
+CodeJudge-AI/                     <- repo root = the Python project
 ├── pyproject.toml                <- project metadata + dependency list
 ├── .env.example                  <- template for your secrets; copy to .env
 ├── README.md                     <- quick command reference
 ├── OVERVIEW.md                   <- this file
 │
+├── mcp/codejudge-mcp/            <- the Go MCP server (separate deployable)
 ├── corpus/                       <- raw source docs (gitignored, created by sync)
 │
 └── codejudge_ai/                 <- the importable Python package (note underscore)
@@ -101,9 +102,10 @@ codejudge-ai/                     <- the Python project root
         └── ingest.py             <- build the store from corpus/
 ```
 
-The dashed name `codejudge-ai` (the folder) can't be imported in Python because
-of the dash, so the actual package inside uses an underscore: `codejudge_ai`.
-That's why there are two similar names.
+The repo folder name (`CodeJudge-AI`) has a dash, which Python can't use in an
+import, so the actual package inside uses an underscore: `codejudge_ai`. The
+project is named `codejudge-ai` in `pyproject.toml`; the importable package is
+`codejudge_ai`. That's why you see both spellings.
 
 ---
 

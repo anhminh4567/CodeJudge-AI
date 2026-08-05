@@ -18,11 +18,11 @@ model-driven tool selection, MCP, and RAG working together.
 
 | Step | What | Where | Status |
 |------|------|-------|--------|
-| S0 | MCP server scaffold + `get_problem_spec` tool | `codejudge-mcp/` | ✅ (commit A) |
-| S1 | Docs sync script (copy CodeJudge Markdown → `corpus/`) | `codejudge-ai/scripts/sync_docs.py` | ✅ |
-| S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge-ai/rag/*`, `scripts/ingest.py` | ✅ |
+| S0 | MCP server scaffold + `get_problem_spec` tool | `mcp/codejudge-mcp/` | ✅ (commit A) |
+| S1 | Docs sync script (copy CodeJudge Markdown → `corpus/`) | `codejudge_ai/scripts/sync_docs.py` | ✅ |
+| S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge_ai/rag/*`, `codejudge_ai/scripts/ingest.py` | ✅ |
 | S2v | Verify live embedding + a real query end-to-end | needs `GEMINI_API_KEY` | ⬜ |
-| S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge-ai/agent/` (new) | ⬜ |
+| S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge_ai/agent/` (new) | ⬜ |
 | S4 | Add the live MCP tool so the agent *chooses* RAG vs `get_problem_spec` | agent wiring + `run_poc.py` | ⬜ **← PoC done here** |
 
 **Sub-parts still to build:** the agent module (ADK `LlmAgent`), the MCP client
@@ -48,7 +48,7 @@ your approval — the agent never persists anything unilaterally.
 
 New MCP tools this phase adds: `list_problems`, `list_languages`, `add_problem`,
 `commit_test_case` (and later `run_submission`). Each is one file in
-`codejudge-mcp/internal/tools/`.
+`mcp/codejudge-mcp/internal/tools/`.
 
 ---
 
@@ -91,5 +91,5 @@ Not needed for the PoC; captured so we don't forget:
 | B4 | Runnable scripts (sync_docs + ingest) | pending review |
 | C… | S3 + S4 — the agent and the PoC | not started |
 
-See `codejudge-ai/OVERVIEW.md` for a plain-language tour of the Python project,
+See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

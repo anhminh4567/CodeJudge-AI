@@ -11,18 +11,24 @@ See the repo root `CLAUDE.md` for the architecture decisions.
 
 ## Layout
 
+This repo root **is** the Python project (run all Python commands from here). The
+Go MCP server lives under `mcp/codejudge-mcp/` (see its own README).
+
 ```
-codejudge_ai/
-├── config.py            # env-driven config (paths, models, chunking)
-├── rag/
-│   ├── extract.py       # md/txt/pdf/docx -> plain text
-│   ├── chunk.py         # LangChain RecursiveCharacterTextSplitter (thin wrapper)
-│   ├── embed.py         # Gemini gemini-embedding-001 (doc vs query task types) + LangChain adapter
-│   ├── store.py         # InMemoryVectorStore (in-memory, saves to store.json) + similarity search
-│   └── search.py        # search(query) -> top-k hits  (the agent's RAG tool seam)
-└── scripts/
-    ├── sync_docs.py     # S1: copy CodeJudge/docs Markdown into ./corpus (READ-ONLY source)
-    └── ingest.py        # S2: extract -> chunk -> embed -> save the store
+CodeJudge-AI/                # repo root = this Python project
+├── pyproject.toml
+├── codejudge_ai/
+│   ├── config.py            # env-driven config (paths, models, chunking)
+│   ├── rag/
+│   │   ├── extract.py       # md/txt/pdf/docx -> plain text
+│   │   ├── chunk.py         # LangChain RecursiveCharacterTextSplitter (thin wrapper)
+│   │   ├── embed.py         # Gemini gemini-embedding-001 (doc vs query task types) + LangChain adapter
+│   │   ├── store.py         # InMemoryVectorStore (in-memory, saves to store.json) + similarity search
+│   │   └── search.py        # search(query) -> top-k hits  (the agent's RAG tool seam)
+│   └── scripts/
+│       ├── sync_docs.py     # S1: copy CodeJudge/docs Markdown into ./corpus (READ-ONLY source)
+│       └── ingest.py        # S2: extract -> chunk -> embed -> save the store
+└── mcp/codejudge-mcp/       # Go MCP server (separate deployable)
 ```
 
 ## Setup

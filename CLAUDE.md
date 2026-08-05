@@ -27,7 +27,7 @@ Guidance for Claude Code when working in this repository.
 Full design is in [codejudge-ai-final-plan.md](codejudge-ai-final-plan.md); the
 build roadmap (phases, steps, current status, commit map) is in
 [DEVELOPMENT_PHASES.md](DEVELOPMENT_PHASES.md); a plain-language tour of the Python
-project is in [codejudge-ai/OVERVIEW.md](codejudge-ai/OVERVIEW.md). Summary:
+project is in [OVERVIEW.md](OVERVIEW.md). Summary:
 
 Three capabilities the AI layer provides:
 1. **Answer visitor questions** — RAG over site docs + ingested PDFs/Word, plus
@@ -36,6 +36,24 @@ Three capabilities the AI layer provides:
    pipeline (draft → validate → persist) with an iterative sub-loop.
 3. **Grade a submission with AI-generated adversarial cases** — a real agent loop,
    grounded by actual sandboxed execution in CodeJudge.
+
+### Repository layout
+
+This repo **is** the Python AI project (`codejudge-ai`) — its package and
+`pyproject.toml` live at the repo root. The Go MCP server lives in a subfolder.
+
+```
+CodeJudge-AI/                 <- repo root = the Python AI project
+├── codejudge_ai/             <- Python package (config, rag/, scripts/, later agent/)
+├── pyproject.toml, .env, README.md, OVERVIEW.md
+├── CLAUDE.md, DEVELOPMENT_PHASES.md, codejudge-ai-final-plan.md
+└── mcp/
+    └── codejudge-mcp/        <- Go MCP server (cmd/, internal/, go.mod)
+```
+
+Run Python from the repo root; run/build Go from `mcp/codejudge-mcp/`. The two
+are still independent deployables (D1) — the folder nesting is organizational
+only, not a shared module.
 
 ### Locked architecture decisions (from the plan)
 

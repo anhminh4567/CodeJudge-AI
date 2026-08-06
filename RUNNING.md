@@ -97,23 +97,17 @@ levels, by how much control you want:
    ```
 
 2. **Customize / embed** — when you want your own routes, auth, CORS, or a
-   *persistent* session store instead of in-memory. `get_fast_api_app(...)`
-   returns a FastAPI instance you configure and serve with uvicorn:
-   ```python
-   # server.py
-   import uvicorn
-   from google.adk.cli.fast_api import get_fast_api_app
-
-   app = get_fast_api_app(
-       agents_dir="adk_app",
-       web=True,                                   # include the dev UI too
-       session_service_uri="postgresql://...",     # persistent sessions (not in-memory)
-       allow_origins=["https://your-frontend"],    # CORS
-   )
-   # add your own routes/auth on `app` here if needed
-   if __name__ == "__main__":
-       uvicorn.run(app, host="0.0.0.0", port=8000)
+   *persistent* session store instead of in-memory. See [server.py](server.py)
+   for a working example: it calls `get_fast_api_app(agents_dir="adk_app",
+   web=True)` (all of ADK's endpoints + the dev UI) and adds a custom `/healthz`
+   route with a plain FastAPI decorator. Run it and try the custom endpoint:
+   ```bash
+   .venv/Scripts/python server.py
+   # http://localhost:8000/         dev UI
+   # http://localhost:8000/healthz  our custom endpoint
    ```
+   For a real deployment, pass `session_service_uri="postgresql://..."` for
+   persistent sessions and `allow_origins=[...]` for CORS.
 
 3. **Managed hosting** — ADK containerizes and deploys the server for you:
    ```bash

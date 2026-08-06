@@ -9,11 +9,12 @@ the folder will stop looking mysterious.
 ## 1. What this project is, in one paragraph
 
 `codejudge-ai` is the "brain" that will answer questions and help author coding
-problems for CodeJudge. Right now it contains **only the first capability's
-foundation: RAG** (see below). The AI agent itself is the *next* step and is not
-wired up yet. So today this project can: take a pile of documents, understand
-them, and let you search them by meaning. That's it — and that's on purpose, so
-each layer is small enough to review.
+problems for CodeJudge. Today it does two things: (1) the **RAG** foundation —
+take a pile of documents, understand them, and search them by meaning; and (2) a
+first **agent** (via Google ADK) that chats with you and calls the RAG search to
+answer grounded, cited questions about CodeJudge. The agent currently has just
+that one tool; the next step (S4) adds a live-lookup tool so it must *choose*
+between sources. Each layer is kept small enough to review on its own.
 
 ---
 
@@ -31,11 +32,11 @@ hand them to the model as context. That way the answer is grounded in *our* docs
    pieces whose vectors are closest, return them. **Also built** (`rag/search.py`),
    ready for the agent to call.
 
-**ADK = Google's Agent Development Kit** (`google-adk`). It's the framework we'll
-use to build the actual *agent* — the thing that decides which tool to call and
-talks to the user. **We are NOT using it yet.** It's listed as an *optional*
-dependency (`pip install -e ".[agent]"`) and only comes into play in the next
-step. So don't look for it in the current code — it isn't there on purpose.
+**ADK = Google's Agent Development Kit** (`google-adk`). It's the framework we use
+to build the *agent* — the thing that decides which tool to call and talks to the
+user. It lives in `codejudge_ai/agent/` and is an *optional* dependency you opt
+into with `pip install -e ".[agent]"`. Today the agent has one tool
+(`search_ingested_docs`); S4 adds the live-lookup tool.
 
 ---
 
@@ -94,12 +95,17 @@ CodeJudge-AI/                     <- repo root = the Python project
     │   ├── chunk.py              <- long text -> small overlapping pieces (LangChain splitter)
     │   ├── embed.py              <- text pieces -> vectors (calls Gemini) + LangChain adapter
     │   ├── store.py              <- InMemoryVectorStore wrapper: build/save/load + search
-    │   ├── search.py             <- search("question") -> best pieces  [agent will call this]
+    │   ├── search.py             <- search("question") -> best pieces  [the agent calls this]
     │   └── store/                <- the saved store.json lives here (gitignored)
+    │
+    ├── agent/                    <- the ADK agent (the "brain")
+    │   ├── tools.py              <- search_ingested_docs: the RAG tool the model can call
+    │   └── root_agent.py         <- the LlmAgent (model + instruction + tools)
     │
     └── scripts/                  <- the things you actually RUN
         ├── sync_docs.py          <- copy CodeJudge's docs into corpus/
-        └── ingest.py             <- build the store from corpus/
+        ├── ingest.py             <- build the store from corpus/
+        └── chat.py               <- talk to the agent in your terminal
 ```
 
 The repo folder name (`CodeJudge-AI`) has a dash, which Python can't use in an
@@ -121,11 +127,14 @@ python -m codejudge_ai.scripts.sync_docs
 # 2) Build the searchable store from corpus/  (needs GEMINI_API_KEY)
 python -m codejudge_ai.scripts.ingest
 python -m codejudge_ai.scripts.ingest --dry-run   # preview chunking, no API calls
+
+# 3) Chat with the agent  (needs the [agent] extra + a built store)
+python -m codejudge_ai.scripts.chat
+python -m codejudge_ai.scripts.chat "how are verdicts decided?"   # one-shot
 ```
 
-`rag/search.py` is not run directly — it's the function the **agent** will call
-once we build it. You can think of it as the finished "search tool" waiting to be
-plugged in.
+`rag/search.py` is not run directly — it's the function the **agent** calls
+(wrapped as `search_ingested_docs` in `agent/tools.py`).
 
 ---
 
@@ -148,12 +157,13 @@ them are listed in `config.py` and `.env.example`.
 
 ```
         (this project: codejudge-ai)
-  corpus/ --ingest--> store/ --search--> [ FUTURE: the ADK agent ]
+  corpus/ --ingest--> store/ --search--> [ the ADK agent ]
                                                |         |
-                          asks Gemini to answer|         | calls tools over MCP
+                          asks Gemini to answer|         | (S4) calls tools over MCP
                                                v         v
                                           Gemini API   codejudge-mcp --> CodeJudge
 ```
 
-Today we've built the left half (corpus → store → search). The next step adds the
-agent that *uses* search plus the `codejudge-mcp` tools — that's the PoC milestone.
+Built so far: `corpus → store → search`, and the agent that *uses* search
+(S3). The next step (S4) gives the agent a second tool — a live problem lookup
+via `codejudge-mcp` — so it must choose between sources. That's the PoC milestone.

@@ -12,8 +12,11 @@ Guidance for Claude Code when working in this repository.
 
 ## Working rules (agreed with the user)
 
-1. **Commits require explicit approval.** Before every `git commit`, ask the user
-   first so they can review. Never commit unprompted.
+1. **Never commit on my own — stop and present for review first.** When a chunk of
+   work is done, **stop before `git commit`**, summarize what changed and how it
+   was verified, and wait. The user reviews, and only when they explicitly say to
+   commit do I commit. No `git commit` (or `git add`-then-commit) without that
+   explicit go-ahead — not even "small" or "obvious" changes.
 2. **Commit size:** medium-to-large, cohesive blocks. Do **not** split into many
    tiny commits. One commit can be a large block of code when that keeps a change
    coherent.

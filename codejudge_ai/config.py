@@ -41,6 +41,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 EMBED_MODEL = os.getenv("CODEJUDGE_AI_EMBED_MODEL", "gemini-embedding-001")
 GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-2.5-flash")
 
+# ADK (google-adk) builds its own genai client from environment variables rather
+# than an explicit key. Mirror our key into the name it reads so the agent "just
+# works" with the single GEMINI_API_KEY the rest of the project uses. With an API
+# key present, google-genai defaults to the AI Studio backend (not Vertex), which
+# is what we want, so we don't set any Vertex flag.
+if GEMINI_API_KEY and not os.getenv("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
+
 # codejudge-mcp endpoint (Streamable HTTP) for the agent's live tools.
 MCP_URL = os.getenv("CODEJUDGE_MCP_URL", "http://localhost:8081/")
 

@@ -22,8 +22,8 @@ model-driven tool selection, MCP, and RAG working together.
 | S1 | Docs sync script (copy CodeJudge Markdown → `corpus/`) | `codejudge_ai/scripts/sync_docs.py` | ✅ |
 | S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge_ai/rag/*`, `codejudge_ai/scripts/ingest.py` | ✅ |
 | S2v | Verify live embedding + a real query end-to-end | needs `GEMINI_API_KEY` | ⬜ |
-| S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge_ai/agent/` (new) | ⬜ |
-| S4 | Add the live MCP tool so the agent *chooses* RAG vs `get_problem_spec` | agent wiring + `run_poc.py` | ⬜ **← PoC done here** |
+| S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge_ai/agent/`, `scripts/chat.py` | ✅ |
+| S4 | Add the live MCP tool so the agent *chooses* RAG vs `get_problem_spec` | agent wiring + MCP client | ⬜ **← PoC done here** |
 
 **Sub-parts still to build:** the agent module (ADK `LlmAgent`), the MCP client
 wiring (`MCPToolset` over Streamable HTTP), and a local run harness
@@ -88,8 +88,11 @@ Not needed for the PoC; captured so we don't forget:
 | B1 | codejudge-ai skeleton, config, docs (OVERVIEW/README) | pending review |
 | B2 | RAG text processing (extract + chunk) | pending review |
 | B3 | RAG vector layer (embed + store + search) | pending review |
-| B4 | Runnable scripts (sync_docs + ingest) | pending review |
-| C… | S3 + S4 — the agent and the PoC | not started |
+| B4 | Runnable scripts (sync_docs + ingest) | ✅ committed |
+| (restructure) | Python AI to repo root, MCP under mcp/ | ✅ committed |
+| (RAG libs) | LangChain splitter + InMemoryVectorStore | ✅ committed |
+| C1 | S3 — RAG-only ADK agent + chat script | pending review |
+| C2 | S4 — add live MCP tool; the PoC | not started |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

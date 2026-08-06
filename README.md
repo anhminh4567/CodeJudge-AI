@@ -6,7 +6,8 @@ only through `codejudge-mcp`, and to Gemini directly for embeddings/generation.
 See the repo root `CLAUDE.md` for the architecture decisions.
 
 > **New here? Read [OVERVIEW.md](OVERVIEW.md) first** — a plain-language tour of
-> what RAG/ADK are, what each folder does, and how to run things. This README is
+> what RAG/ADK are, what each folder does, and how to run things. For the exact
+> "what do I start and when" steps, see [RUNNING.md](RUNNING.md). This README is
 > the terse command reference.
 
 ## Layout
@@ -25,9 +26,13 @@ CodeJudge-AI/                # repo root = this Python project
 │   │   ├── embed.py         # Gemini gemini-embedding-001 (doc vs query task types) + LangChain adapter
 │   │   ├── store.py         # InMemoryVectorStore (in-memory, saves to store.json) + similarity search
 │   │   └── search.py        # search(query) -> top-k hits  (the agent's RAG tool seam)
+│   ├── agent/
+│   │   ├── tools.py         # search_ingested_docs (RAG tool the model can call)
+│   │   └── root_agent.py    # the ADK LlmAgent (RAG-only for now)
 │   └── scripts/
 │       ├── sync_docs.py     # S1: copy CodeJudge/docs Markdown into ./corpus (READ-ONLY source)
-│       └── ingest.py        # S2: extract -> chunk -> embed -> save the store
+│       ├── ingest.py        # S2: extract -> chunk -> embed -> save the store
+│       └── chat.py          # S3: chat with the agent locally (ADK InMemoryRunner)
 └── mcp/codejudge-mcp/       # Go MCP server (separate deployable)
 ```
 
@@ -54,6 +59,18 @@ python -m codejudge_ai.scripts.ingest --dry-run   # extract+chunk only, no API c
 
 Add your own PDFs/Word docs by dropping them anywhere under `corpus/` before
 ingesting — `.pdf` and `.docx` are extracted alongside Markdown.
+
+## Chat with the assistant (S3)
+
+Needs the agent extra (`pip install -e ".[agent]"`) and a built store.
+
+```bash
+python -m codejudge_ai.scripts.chat                        # interactive REPL
+python -m codejudge_ai.scripts.chat "how are verdicts decided?"   # one-shot
+```
+
+The agent calls `search_ingested_docs` to ground its answers in the docs and
+cites the source files. It prints each tool call so you can see the RAG happen.
 
 ## Configuration
 

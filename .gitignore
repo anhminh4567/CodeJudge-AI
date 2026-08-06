@@ -18,6 +18,9 @@ venv/
 /corpus/
 /codejudge_ai/rag/store/
 
+# ADK local runtime artifacts (dev-UI session storage, etc.)
+.adk/
+
 # IDE / OS
 .idea/
 .vscode/

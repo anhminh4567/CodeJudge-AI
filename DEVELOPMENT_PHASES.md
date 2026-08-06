@@ -18,7 +18,7 @@ model-driven tool selection, MCP, and RAG working together.
 
 | Step | What | Where | Status |
 |------|------|-------|--------|
-| S0 | MCP server scaffold + `get_problem_spec` tool | `mcp/codejudge-mcp/` | ✅ (commit A) |
+| S0 | MCP server scaffold + `get_problem_spec` tool | `codejudge_mcp/` (Python) | ✅ |
 | S1 | Docs sync script (copy CodeJudge Markdown → `corpus/`) | `codejudge_ai/scripts/sync_docs.py` | ✅ |
 | S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge_ai/rag/*`, `codejudge_ai/scripts/ingest.py` | ✅ |
 | S2v | Verify live embedding + a real query end-to-end | needs `GEMINI_API_KEY` | ⬜ |
@@ -48,7 +48,7 @@ your approval — the agent never persists anything unilaterally.
 
 New MCP tools this phase adds: `list_problems`, `list_languages`, `add_problem`,
 `commit_test_case` (and later `run_submission`). Each is one file in
-`mcp/codejudge-mcp/internal/tools/`.
+`codejudge_mcp/server.py` (each tool is a `@mcp.tool()`).
 
 ---
 
@@ -85,13 +85,15 @@ Not needed for the PoC; captured so we don't forget:
 | Commit | Covers | Status |
 |--------|--------|--------|
 | A | S0 (codejudge-mcp scaffold + `get_problem_spec`) | ✅ committed |
-| B1 | codejudge-ai skeleton, config, docs (OVERVIEW/README) | pending review |
-| B2 | RAG text processing (extract + chunk) | pending review |
-| B3 | RAG vector layer (embed + store + search) | pending review |
+| B1 | codejudge-ai skeleton, config, docs (OVERVIEW/README) | ✅ committed |
+| B2 | RAG text processing (extract + chunk) | ✅ committed |
+| B3 | RAG vector layer (embed + store + search) | ✅ committed |
 | B4 | Runnable scripts (sync_docs + ingest) | ✅ committed |
-| (restructure) | Python AI to repo root, MCP under mcp/ | ✅ committed |
+| (restructure) | Python AI to repo root, MCP under a subfolder | ✅ committed |
 | (RAG libs) | LangChain splitter + InMemoryVectorStore | ✅ committed |
-| C1 | S3 — RAG-only ADK agent + chat script | pending review |
+| C1 | S3 — RAG-only ADK agent + chat script | ✅ committed |
+| (server) | Example FastAPI server with /healthz | ✅ committed |
+| (mcp-python) | Rewrite MCP server in Python (drop Go; revises D2) | pending review |
 | C2 | S4 — add live MCP tool; the PoC | not started |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,

@@ -84,7 +84,7 @@ CodeJudge-AI/                     <- repo root = the Python project
 ├── README.md                     <- quick command reference
 ├── OVERVIEW.md                   <- this file
 │
-├── mcp/codejudge-mcp/            <- the Go MCP server (separate deployable)
+├── codejudge_mcp/                <- the MCP server, Python/FastMCP (separate deployable)
 ├── corpus/                       <- raw source docs (gitignored, created by sync)
 │
 └── codejudge_ai/                 <- the importable Python package (note underscore)

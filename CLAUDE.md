@@ -42,28 +42,33 @@ Three capabilities the AI layer provides:
 
 ### Repository layout
 
-This repo **is** the Python AI project (`codejudge-ai`) — its package and
-`pyproject.toml` live at the repo root. The Go MCP server lives in a subfolder.
+Single-language Python repo. The AI package and `pyproject.toml` live at the repo
+root; the MCP server is a second package alongside it. Both install from the one
+`pyproject.toml` and share the venv, but stay independent deployables (D1).
 
 ```
-CodeJudge-AI/                 <- repo root = the Python AI project
-├── codejudge_ai/             <- Python package (config, rag/, scripts/, later agent/)
-├── pyproject.toml, .env, README.md, OVERVIEW.md
-├── CLAUDE.md, DEVELOPMENT_PHASES.md, codejudge-ai-final-plan.md
-└── mcp/
-    └── codejudge-mcp/        <- Go MCP server (cmd/, internal/, go.mod)
+CodeJudge-AI/                 <- repo root
+├── codejudge_ai/            <- the AI: config, rag/, agent/, scripts/
+├── codejudge_mcp/           <- the MCP server (FastMCP over Streamable HTTP)
+├── adk_app/                 <- thin launcher so `adk web`/`adk run` find the agent
+├── server.py               <- example custom FastAPI server (/healthz)
+├── pyproject.toml, .env, README.md, OVERVIEW.md, RUNNING.md
+└── CLAUDE.md, DEVELOPMENT_PHASES.md, codejudge-ai-final-plan.md
 ```
 
-Run Python from the repo root; run/build Go from `mcp/codejudge-mcp/`. The two
-are still independent deployables (D1) — the folder nesting is organizational
-only, not a shared module.
+Run everything from the repo root: `python -m codejudge_mcp` (the MCP server),
+`python -m codejudge_ai.scripts.chat` / `adk web adk_app/codejudge_assistant`
+(the agent). The two services still talk only over MCP/HTTP — no shared module.
 
 ### Locked architecture decisions (from the plan)
 
 - **D1 — Microservices.** Separate repos/binaries from CodeJudge. They talk over
   CodeJudge's HTTP API only; no shared module, no in-process calls.
-- **D2 — Polyglot.** `codejudge-mcp` in **Go** (thin MCP server wrapping CodeJudge's
-  HTTP API). `codejudge-ai` in **Python** (Google ADK agent brain + document RAG).
+- **D2 (REVISED) — Single-language Python.** Originally polyglot (Go MCP + Python
+  AI). Revised: the MCP server is thin enough that a second language bought
+  nothing, and the official Python `mcp` SDK (FastMCP) handles the server side, so
+  `codejudge_mcp` is now Python too. One language, one venv, one `pyproject.toml`.
+  (Still separate deployables per D1.)
 - **D3 — Workflow where predictable, agent where judgment is needed.**
 - **D4 — MCP over Streamable HTTP** at every tool boundary.
 - **D5 — The LLM never executes code.** All execution goes through CodeJudge's
@@ -75,8 +80,8 @@ only, not a shared module.
 
 | Service | Language | Depends on |
 |---|---|---|
-| `codejudge-mcp` | Go | CodeJudge's HTTP API |
-| `codejudge-ai` | Python (`google-adk`) | `codejudge-mcp` (MCP/HTTP) + Gemini API |
+| `codejudge_mcp` | Python (`mcp`/FastMCP) | CodeJudge's HTTP API |
+| `codejudge_ai` | Python (`google-adk`) | `codejudge_mcp` (MCP/HTTP) + Gemini API |
 
 RAG pipeline (deliberately minimal): extract (`pypdf`/`python-docx`) → chunk
 (recursive char splitter) → embed (`gemini-embedding-001`) → flat-file store →

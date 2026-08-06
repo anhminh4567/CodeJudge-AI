@@ -49,8 +49,9 @@ GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-2.5-flash")
 if GEMINI_API_KEY and not os.getenv("GOOGLE_API_KEY"):
     os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
-# codejudge-mcp endpoint (Streamable HTTP) for the agent's live tools.
-MCP_URL = os.getenv("CODEJUDGE_MCP_URL", "http://localhost:8081/")
+# codejudge-mcp endpoint (Streamable HTTP) for the agent's live tools. FastMCP
+# serves at the /mcp path by default.
+MCP_URL = os.getenv("CODEJUDGE_MCP_URL", "http://localhost:8081/mcp")
 
 # Chunking parameters (characters, not tokens — a simple, predictable proxy).
 CHUNK_SIZE = int(os.getenv("CODEJUDGE_AI_CHUNK_SIZE", "1200"))

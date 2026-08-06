@@ -13,7 +13,7 @@ See the repo root `CLAUDE.md` for the architecture decisions.
 ## Layout
 
 This repo root **is** the Python project (run all Python commands from here). The
-Go MCP server lives under `mcp/codejudge-mcp/` (see its own README).
+MCP server is a second Python package, `codejudge_mcp/` (see its own README).
 
 ```
 CodeJudge-AI/                # repo root = this Python project
@@ -33,7 +33,17 @@ CodeJudge-AI/                # repo root = this Python project
 │       ├── sync_docs.py     # S1: copy CodeJudge/docs Markdown into ./corpus (READ-ONLY source)
 │       ├── ingest.py        # S2: extract -> chunk -> embed -> save the store
 │       └── chat.py          # S3: chat with the agent locally (ADK InMemoryRunner)
-└── mcp/codejudge-mcp/       # Go MCP server (separate deployable)
+├── codejudge_mcp/           # MCP server (FastMCP/Streamable HTTP) — separate deployable
+│   ├── server.py            # FastMCP instance + tools (get_problem_spec)
+│   ├── codejudge_client.py  # async httpx client for CodeJudge
+│   └── __main__.py          # python -m codejudge_mcp
+└── adk_app/codejudge_assistant/     # launcher so `adk web`/`adk run` find the agent
+```
+
+## MCP server
+
+```bash
+python -m codejudge_mcp        # serves http://127.0.0.1:8081/mcp (needs CodeJudge on :8080 for live data)
 ```
 
 ## Setup

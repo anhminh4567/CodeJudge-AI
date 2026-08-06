@@ -17,7 +17,7 @@ need to start something.
 | **Python AI** (`codejudge_ai`) | The RAG pipeline + the ADK agent | ✅ yes |
 | **The agent** | Loaded *inside* the runner/dev UI — not a separate process | ✅ (auto, see below) |
 | **Vector store** (`store.json`) | The searchable form of the docs; built by `ingest` | ✅ must exist first |
-| **codejudge-mcp** (Go) | MCP server fronting CodeJudge's API | ❌ not until S4 |
+| **codejudge_mcp** (Python) | MCP server fronting CodeJudge's API | ❌ not until S4 |
 | **CodeJudge** (sibling repo) | The actual online judge | ❌ not until S4 |
 
 **Key point:** "starting the agent" is not a separate step. When you run the dev
@@ -132,8 +132,7 @@ it will need CodeJudge running. Recorded here so it's ready when we get there:
 #   run per CodeJudge's own instructions, exposes http://localhost:8080
 
 # terminal 2 - the MCP server (fronts CodeJudge for the agent)
-cd mcp/codejudge-mcp
-go run ./cmd/server            # listens on :8081, talks to CodeJudge at :8080
+.venv/Scripts/python -m codejudge_mcp    # serves http://127.0.0.1:8081/mcp, talks to CodeJudge :8080
 
 # terminal 3 - the agent (as in Step 2); it will call the MCP over HTTP
 ```

@@ -1,9 +1,3 @@
-# Go
-/mcp/codejudge-mcp/**/*.exe
-*.exe
-*.test
-*.out
-
 # Python
 __pycache__/
 *.py[cod]

@@ -21,10 +21,11 @@ codejudge_mcp/
 
 | Tool | Wraps | Purpose |
 |------|-------|---------|
+| `list_problems(page, size)` | `GET /problems` | List available problems (id + metadata), paged. |
 | `get_problem_spec(problem_id)` | `GET /problems/:id` | Fetch a problem's public spec (mode, signature, limits, sample cases). |
 
-More tools (`list_problems`, `run_submission`, `add_problem`, …) are added as the
-agent grows; each is a `@mcp.tool()` in `server.py`.
+More tools (`run_submission`, `add_problem`, …) are added as the agent grows;
+each is a `@mcp.tool()` in `server.py`.
 
 ## Configuration (env, shared repo-root `.env`)
 

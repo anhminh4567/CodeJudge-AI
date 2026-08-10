@@ -22,6 +22,9 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 logging.getLogger("google_genai").setLevel(logging.ERROR)
+# ADK logs a spurious mTLS/ADC warning on every MCP connection (we use API-key
+# auth, so mTLS never applies). Silence ADK warnings; real errors still show.
+logging.getLogger("google_adk").setLevel(logging.ERROR)
 
 from google.adk.runners import InMemoryRunner  # noqa: E402
 from google.genai import types  # noqa: E402

@@ -23,11 +23,14 @@ model-driven tool selection, MCP, and RAG working together.
 | S2 | RAG ingest pipeline (extract → chunk → embed → in-memory vector store) | `codejudge_ai/rag/*`, `codejudge_ai/scripts/ingest.py` | ✅ |
 | S2v | Verify live embedding + a real query end-to-end | needs `GEMINI_API_KEY` | ⬜ |
 | S3 | `search_ingested_docs` tool + a bare RAG-only agent (first working Q&A) | `codejudge_ai/agent/`, `scripts/chat.py` | ✅ |
-| S4 | Add the live MCP tool so the agent *chooses* RAG vs `get_problem_spec` | agent wiring + MCP client | ⬜ **← PoC done here** |
+| S4 | Live MCP tools (`list_problems`, `get_problem_spec`) so the agent *chooses* RAG vs live lookup | agent wiring + MCP client | ✅ wired & routing-verified (live-data test pending a running CodeJudge) **← PoC**|
 
-**Sub-parts still to build:** the agent module (ADK `LlmAgent`), the MCP client
-wiring (`MCPToolset` over Streamable HTTP), and a local run harness
-(`InMemoryRunner`) so you can chat with it in the terminal.
+**Status:** Phase 1 is functionally complete. The agent (ADK `LlmAgent`) routes
+between RAG (`search_ingested_docs`) and live MCP tools (`list_problems`,
+`get_problem_spec`) per question, run locally via `InMemoryRunner`/`adk web`. The
+only unverified piece is live problem *data*, which needs a running CodeJudge.
+(`list_problems` was pulled forward from Phase 2's S5 since it's the natural
+first read-path test.)
 
 ---
 
@@ -93,8 +96,8 @@ Not needed for the PoC; captured so we don't forget:
 | (RAG libs) | LangChain splitter + InMemoryVectorStore | ✅ committed |
 | C1 | S3 — RAG-only ADK agent + chat script | ✅ committed |
 | (server) | Example FastAPI server with /healthz | ✅ committed |
-| (mcp-python) | Rewrite MCP server in Python (drop Go; revises D2) | pending review |
-| C2 | S4 — add live MCP tool; the PoC | not started |
+| (mcp-python) | Rewrite MCP server in Python (drop Go; revises D2) | ✅ committed |
+| C2 | S4 — live MCP tools wired into the agent (the PoC) + `list_problems` | pending review |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

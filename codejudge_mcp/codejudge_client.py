@@ -38,6 +38,22 @@ async def healthz() -> None:
         raise CodeJudgeError(resp.status_code)
 
 
+async def list_problems(page: int = 1, size: int = 20) -> list[dict]:
+    """List problems (metadata only), paged (GET /problems).
+
+    Returns the `data` array from CodeJudge's page envelope; raises
+    CodeJudgeError on a non-2xx.
+    """
+    url = f"{config.CODEJUDGE_BASE_URL}/problems"
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        resp = await client.get(
+            url, params={"page": page, "size": size}, headers={"Accept": "application/json"}
+        )
+    if resp.status_code // 100 != 2:
+        raise CodeJudgeError(resp.status_code)
+    return resp.json().get("data") or []
+
+
 async def get_problem(problem_id: str) -> dict:
     """Fetch one problem's metadata + sample cases (GET /problems/:id).
 

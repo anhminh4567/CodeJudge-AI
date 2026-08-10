@@ -70,7 +70,7 @@ python -m codejudge_ai.scripts.ingest --dry-run   # extract+chunk only, no API c
 Add your own PDFs/Word docs by dropping them anywhere under `corpus/` before
 ingesting — `.pdf` and `.docx` are extracted alongside Markdown.
 
-## Chat with the assistant (S3)
+## Chat with the assistant
 
 Needs the agent extra (`pip install -e ".[agent]"`) and a built store.
 
@@ -79,8 +79,14 @@ python -m codejudge_ai.scripts.chat                        # interactive REPL
 python -m codejudge_ai.scripts.chat "how are verdicts decided?"   # one-shot
 ```
 
-The agent calls `search_ingested_docs` to ground its answers in the docs and
-cites the source files. It prints each tool call so you can see the RAG happen.
+The agent chooses per question between two sources:
+- `search_ingested_docs` (RAG) for "how does CodeJudge work" — cites doc sources.
+- live tools `list_problems` / `get_problem_spec` (over MCP) for questions about
+  the actual problems on a running CodeJudge.
+
+For the live tools, also run the MCP server (`python -m codejudge_mcp`) and, for
+real data, CodeJudge itself. See [RUNNING.md](RUNNING.md) for the full topology.
+It prints each tool call so you can see which source it picked.
 
 ## Configuration
 

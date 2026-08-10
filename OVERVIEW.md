@@ -8,13 +8,15 @@ the folder will stop looking mysterious.
 
 ## 1. What this project is, in one paragraph
 
-`codejudge-ai` is the "brain" that will answer questions and help author coding
-problems for CodeJudge. Today it does two things: (1) the **RAG** foundation —
-take a pile of documents, understand them, and search them by meaning; and (2) a
-first **agent** (via Google ADK) that chats with you and calls the RAG search to
-answer grounded, cited questions about CodeJudge. The agent currently has just
-that one tool; the next step (S4) adds a live-lookup tool so it must *choose*
-between sources. Each layer is kept small enough to review on its own.
+`codejudge-ai` is the "brain" that answers questions (and later will help author
+coding problems) for CodeJudge. Today it does two things: (1) the **RAG**
+foundation — take a pile of documents, understand them, and search them by
+meaning; and (2) an **agent** (via Google ADK) that chats with you and *chooses*,
+per question, between the RAG search (for "how does CodeJudge work") and live
+tools that hit a running CodeJudge through the MCP server (for "what problems
+exist / show me problem X"). That choice — model-driven tool selection across two
+genuinely different sources — is the proof-of-concept. Each layer is kept small
+enough to review on its own.
 
 ---
 
@@ -35,8 +37,9 @@ hand them to the model as context. That way the answer is grounded in *our* docs
 **ADK = Google's Agent Development Kit** (`google-adk`). It's the framework we use
 to build the *agent* — the thing that decides which tool to call and talks to the
 user. It lives in `codejudge_ai/agent/` and is an *optional* dependency you opt
-into with `pip install -e ".[agent]"`. Today the agent has one tool
-(`search_ingested_docs`); S4 adds the live-lookup tool.
+into with `pip install -e ".[agent]"`. The agent has a RAG tool
+(`search_ingested_docs`) and live tools (`list_problems`, `get_problem_spec`)
+served over MCP by `codejudge_mcp`.
 
 ---
 
@@ -159,11 +162,12 @@ them are listed in `config.py` and `.env.example`.
         (this project: codejudge-ai)
   corpus/ --ingest--> store/ --search--> [ the ADK agent ]
                                                |         |
-                          asks Gemini to answer|         | (S4) calls tools over MCP
+                          asks Gemini to answer|         | calls live tools over MCP
                                                v         v
-                                          Gemini API   codejudge-mcp --> CodeJudge
+                                          Gemini API   codejudge_mcp --> CodeJudge
 ```
 
-Built so far: `corpus → store → search`, and the agent that *uses* search
-(S3). The next step (S4) gives the agent a second tool — a live problem lookup
-via `codejudge-mcp` — so it must choose between sources. That's the PoC milestone.
+The agent chooses per question: RAG search over the store for "how does CodeJudge
+work", or the live tools (`list_problems`, `get_problem_spec`) via `codejudge_mcp`
+for "what problems exist / show me problem X". That tool-selection across two
+different sources is the PoC — and it's working.

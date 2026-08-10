@@ -12,6 +12,7 @@ from mcp.server.fastmcp import FastMCP
 
 from . import config
 from .codejudge_client import CodeJudgeError, get_problem
+from . import codejudge_client
 
 mcp = FastMCP(
     "codejudge-mcp",
@@ -19,6 +20,26 @@ mcp = FastMCP(
     port=config.MCP_PORT,
     streamable_http_path=config.MCP_PATH,
 )
+
+
+@mcp.tool()
+async def list_problems(page: int = 1, size: int = 20) -> dict:
+    """List the problems available on CodeJudge (id + metadata), paged.
+
+    Use this to see what problems exist — e.g. to answer "what problems are
+    there?" or to find a problem id before looking it up in detail.
+
+    Args:
+        page: 1-based page number.
+        size: page size (max 100).
+    """
+    try:
+        items = await codejudge_client.list_problems(page, size)
+    except CodeJudgeError as exc:
+        return {"error": str(exc)}
+    except Exception as exc:
+        return {"error": f"could not reach CodeJudge: {exc}"}
+    return {"problems": items, "count": len(items)}
 
 
 @mcp.tool()

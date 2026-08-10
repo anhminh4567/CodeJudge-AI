@@ -4,21 +4,22 @@ This project has a few moving parts, but **you rarely need all of them at once**
 This doc says what to start, in what order, and — importantly — *when you don't*
 need to start something.
 
-> **TL;DR for today (S3, RAG agent):** build the store once, then run the dev UI.
-> That's it. You do **not** start the agent separately, and you do **not** need
-> the MCP server or CodeJudge yet.
+> **TL;DR:** build the store once. For doc Q&A, just run the dev UI. For the
+> agent's *live problem* tools, also run the MCP server (`python -m codejudge_mcp`)
+> — and start CodeJudge too if you want real problem data. The agent still runs
+> if the MCP server is down; it just can't answer live-problem questions.
 
 ---
 
 ## The components (and when each is needed)
 
-| Component | What it is | Needed now (S3)? |
+| Component | What it is | When needed |
 |---|---|---|
-| **Python AI** (`codejudge_ai`) | The RAG pipeline + the ADK agent | ✅ yes |
-| **The agent** | Loaded *inside* the runner/dev UI — not a separate process | ✅ (auto, see below) |
-| **Vector store** (`store.json`) | The searchable form of the docs; built by `ingest` | ✅ must exist first |
-| **codejudge_mcp** (Python) | MCP server fronting CodeJudge's API | ❌ not until S4 |
-| **CodeJudge** (sibling repo) | The actual online judge | ❌ not until S4 |
+| **Python AI** (`codejudge_ai`) | The RAG pipeline + the ADK agent | always |
+| **The agent** | Loaded *inside* the runner/dev UI — not a separate process | always (auto, see below) |
+| **Vector store** (`store.json`) | The searchable form of the docs; built by `ingest` | always — must exist first |
+| **codejudge_mcp** (Python) | MCP server for the agent's live tools (`list_problems`, `get_problem_spec`) | for live-problem questions |
+| **CodeJudge** (sibling repo) | The actual online judge | for real problem *data* (else live tools return an error) |
 
 **Key point:** "starting the agent" is not a separate step. When you run the dev
 UI (`adk web`), our own REPL (`chat`), or `adk run`, that command *is* the agent —
@@ -122,10 +123,10 @@ then you'll also be running the MCP server + CodeJudge (below).
 
 ---
 
-## Later: MCP + CodeJudge (S4 onward — not needed yet)
+## Step 3 — Live problem tools (S4): the MCP server + CodeJudge
 
-Once the agent gains the live-lookup tool, you'll also start the MCP server, and
-it will need CodeJudge running. Recorded here so it's ready when we get there:
+The agent has live tools (`list_problems`, `get_problem_spec`) that reach a
+running CodeJudge through the MCP server. To use them, run three processes:
 
 ```bash
 # terminal 1 - CodeJudge (its own repo; we only ever READ it)
@@ -134,7 +135,17 @@ it will need CodeJudge running. Recorded here so it's ready when we get there:
 # terminal 2 - the MCP server (fronts CodeJudge for the agent)
 .venv/Scripts/python -m codejudge_mcp    # serves http://127.0.0.1:8081/mcp, talks to CodeJudge :8080
 
-# terminal 3 - the agent (as in Step 2); it will call the MCP over HTTP
+# terminal 3 - the agent (as in Step 2); it calls the MCP server over HTTP
 ```
 
-Until S4, skip this whole section.
+Then ask the agent things like *"what problems are available?"* or *"show me the
+spec for problem two-sum"* — it routes those to the live tools, and doc questions
+("how does the sandbox work?") to RAG.
+
+Notes:
+- **MCP server down?** The agent still runs and answers doc (RAG) questions; live
+  tools just report they can't connect.
+- **CodeJudge down (MCP up)?** Live tools return a clear "CodeJudge unreachable"
+  message, which the agent relays — it won't invent problem data.
+- The agent finds the MCP server via `CODEJUDGE_MCP_URL` (default
+  `http://localhost:8081/mcp`).

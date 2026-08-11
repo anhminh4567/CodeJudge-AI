@@ -29,10 +29,24 @@ logging.getLogger("google_adk").setLevel(logging.ERROR)
 from google.adk.runners import InMemoryRunner  # noqa: E402
 from google.genai import types  # noqa: E402
 
+from .. import config  # noqa: E402
+from ..agent.observability import LoggingPlugin, enable_console_tracing  # noqa: E402
 from ..agent.root_agent import root_agent  # noqa: E402
 
 APP_NAME = "codejudge_ai"
 USER_ID = "local"
+
+
+def _build_runner() -> InMemoryRunner:
+    """InMemoryRunner, with the observability plugin + console tracing when
+    CODEJUDGE_AI_TRACE=1 (see agent/observability.py)."""
+    if not config.TRACE_ENABLED:
+        return InMemoryRunner(agent=root_agent, app_name=APP_NAME)
+    logging.getLogger("codejudge_ai").setLevel(logging.INFO)
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    enable_console_tracing()
+    return InMemoryRunner(agent=root_agent, app_name=APP_NAME, plugins=[LoggingPlugin()])
 
 
 async def ask(runner: InMemoryRunner, session_id: str, query: str) -> None:
@@ -54,7 +68,7 @@ async def ask(runner: InMemoryRunner, session_id: str, query: str) -> None:
 
 
 async def main() -> None:
-    runner = InMemoryRunner(agent=root_agent, app_name=APP_NAME)
+    runner = _build_runner()
     session = await runner.session_service.create_session(app_name=APP_NAME, user_id=USER_ID)
 
     one_shot = " ".join(sys.argv[1:]).strip()

@@ -97,7 +97,8 @@ Not needed for the PoC; captured so we don't forget:
 | C1 | S3 — RAG-only ADK agent + chat script | ✅ committed |
 | (server) | Example FastAPI server with /healthz | ✅ committed |
 | (mcp-python) | Rewrite MCP server in Python (drop Go; revises D2) | ✅ committed |
-| C2 | S4 — live MCP tools wired into the agent (the PoC) + `list_problems` | pending review |
+| C2 | S4 — live MCP tools wired into the agent (the PoC) + `list_problems` | ✅ committed |
+| (hardening) | Observability hooks (callbacks/plugin/OTel) + input guardrail + RAG min-score + instruction fix | pending review |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

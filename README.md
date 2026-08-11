@@ -5,10 +5,15 @@ agent that answers questions and helps author problems. It talks to CodeJudge
 only through `codejudge-mcp`, and to Gemini directly for embeddings/generation.
 See the repo root `CLAUDE.md` for the architecture decisions.
 
-> **New here? Read [OVERVIEW.md](OVERVIEW.md) first** — a plain-language tour of
-> what RAG/ADK are, what each folder does, and how to run things. For the exact
-> "what do I start and when" steps, see [RUNNING.md](RUNNING.md). This README is
-> the terse command reference.
+> **New here? Read [docs/OVERVIEW.md](docs/OVERVIEW.md) first** — a plain-language
+> tour of what RAG/ADK are, what each folder does, and how to run things. For the
+> exact "what do I start and when" steps, see [docs/RUNNING.md](docs/RUNNING.md).
+> This README is the terse command reference.
+>
+> More docs in [docs/](docs/): [ARCHITECTURE](docs/ARCHITECTURE.md) ·
+> [WIRING](docs/WIRING.md) (how config loads & the agent is found) ·
+> [DEVELOPMENT_PHASES](docs/DEVELOPMENT_PHASES.md) · [GUARDRAIL](docs/GUARDRAIL.md) ·
+> [OBSERVABILITY](docs/OBSERVABILITY.md)
 
 ## Layout
 
@@ -39,6 +44,29 @@ CodeJudge-AI/                # repo root = this Python project
 │   └── __main__.py          # python -m codejudge_mcp
 └── adk_app/codejudge_assistant/     # launcher so `adk web`/`adk run` find the agent
 ```
+
+## Observability & safeguards
+
+ADK handles streaming, tracing (OpenTelemetry) and logging natively — the dev UI
+is built on that. This project adds its own hooks at the seams:
+
+- **Guardrail** (`agent/guardrail.py`) — a `before_model_callback` on the agent
+  that screens each user message and can *short-circuit* the model call (returns a
+  refusal). Rule-based and high-precision; swap `screen_input` for an LLM screen
+  if you want. On by default; `CODEJUDGE_AI_GUARDRAIL=0` disables it.
+- **Observability** (`agent/observability.py`) — a `LoggingPlugin` (global run/
+  model/tool hooks with timings) plus `enable_console_tracing()` (prints OTel
+  spans to the terminal). Opt-in in the chat REPL with `CODEJUDGE_AI_TRACE=1`.
+
+The four seams, easiest → deepest: **per-agent callbacks** (guardrail), **plugins**
+(LoggingPlugin), **OpenTelemetry exporters** (console tracer), and plain logging.
+
+```bash
+CODEJUDGE_AI_TRACE=1 python -m codejudge_ai.scripts.chat "how are verdicts classified?"
+```
+
+Details: [docs/GUARDRAIL.md](docs/GUARDRAIL.md) (modes: `off`/`heuristic`/`llm`)
+and [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
 
 ## MCP server
 
@@ -85,7 +113,7 @@ The agent chooses per question between two sources:
   the actual problems on a running CodeJudge.
 
 For the live tools, also run the MCP server (`python -m codejudge_mcp`) and, for
-real data, CodeJudge itself. See [RUNNING.md](RUNNING.md) for the full topology.
+real data, CodeJudge itself. See [docs/RUNNING.md](docs/RUNNING.md) for the full topology.
 It prints each tool call so you can see which source it picked.
 
 ## Configuration

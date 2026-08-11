@@ -18,6 +18,7 @@ from google.adk.tools.mcp_tool import StreamableHTTPConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 
 from .. import config
+from .guardrail import input_guardrail_callback
 from .tools import search_ingested_docs
 
 _INSTRUCTION = """\
@@ -38,7 +39,10 @@ You have two kinds of tools — choose the one that fits the question:
    reflect the live service, not the docs.
 
 Rules:
-- Pick the tool that matches the question; you may use more than one in a turn.
+- Use exactly the tool(s) that fit the question — do NOT call both kinds for the
+  same question. Questions about which problems exist or a specific problem's
+  details go to the live tools ONLY (never search_ingested_docs). Questions about
+  how CodeJudge works go to search_ingested_docs ONLY.
 - Ground every answer in tool results. Cite doc sources (e.g. "(source:
   WARM_POOL.md)") for doc-based answers.
 - If a tool returns an "error" (e.g. CodeJudge is unreachable), tell the user
@@ -54,9 +58,14 @@ _codejudge_mcp = MCPToolset(
     tool_filter=["list_problems", "get_problem_spec"],
 )
 
+# Input guardrail runs before every model call (see guardrail.py). Attaching it
+# on the agent means it protects every entry point (chat, adk web, adk run).
+_before_model = [input_guardrail_callback] if config.GUARDRAIL_MODE != "off" else None
+
 root_agent = LlmAgent(
     name="codejudge_assistant",
     model=config.GEN_MODEL,
     instruction=_INSTRUCTION,
     tools=[search_ingested_docs, _codejudge_mcp],
+    before_model_callback=_before_model,
 )

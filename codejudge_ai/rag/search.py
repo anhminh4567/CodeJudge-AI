@@ -18,8 +18,16 @@ def _load_store() -> VectorStore:
 
 
 def search(query: str, top_k: int | None = None) -> list[Hit]:
-    """Return the most relevant ingested-doc chunks for `query`."""
+    """Return the most relevant ingested-doc chunks for `query`.
+
+    Chunks scoring below config.MIN_SCORE are dropped, so a query with no good
+    match returns nothing (the agent then says it's not in the docs) instead of
+    being handed weak, misleading context.
+    """
     if not query or not query.strip():
         return []
     store = _load_store()
-    return store.search(query, top_k or config.TOP_K)
+    hits = store.search(query, top_k or config.TOP_K)
+    if config.MIN_SCORE > 0:
+        hits = [h for h in hits if h.score >= config.MIN_SCORE]
+    return hits

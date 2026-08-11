@@ -24,7 +24,8 @@ PROJECT_DIR = PACKAGE_DIR.parent
 CORPUS_DIR = Path(os.getenv("CODEJUDGE_AI_CORPUS_DIR", PROJECT_DIR / "corpus"))
 
 # Where the flat-file vector store is written (S2 ingest output).
-STORE_DIR = Path(os.getenv("CODEJUDGE_AI_STORE_DIR", PACKAGE_DIR / "rag" / "store"))
+STORE_DIR = Path(os.getenv("CODEJUDGE_AI_STORE_DIR",
+                 PACKAGE_DIR / "rag" / "store"))
 
 # Source of CodeJudge markdown docs for the sync script (S1). CodeJudge is a
 # sibling of this repo and READ-ONLY to this project; the sync script only ever
@@ -39,7 +40,9 @@ CODEJUDGE_DOCS_DIR = Path(
 # Gemini / genai.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 EMBED_MODEL = os.getenv("CODEJUDGE_AI_EMBED_MODEL", "gemini-embedding-001")
-GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-2.5-flash")
+# Use the "-latest" alias so we track the current Flash model; pinned versions
+# like gemini-2.5-flash get retired and start returning 404 for new users.
+GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-flash-latest")
 
 # ADK (google-adk) builds its own genai client from environment variables rather
 # than an explicit key. Mirror our key into the name it reads so the agent "just
@@ -59,3 +62,38 @@ CHUNK_OVERLAP = int(os.getenv("CODEJUDGE_AI_CHUNK_OVERLAP", "200"))
 
 # Default number of chunks retrieved per query.
 TOP_K = int(os.getenv("CODEJUDGE_AI_TOP_K", "4"))
+
+# Drop retrieved chunks below this cosine score, so weak/irrelevant matches don't
+# get fed to the model (it should say "not in the docs" instead of grasping).
+# NOTE: gemini-embedding-001 has a high similarity baseline on this corpus —
+# unrelated queries still score ~0.50, while on-topic hits are ~0.65+. So the
+# threshold sits at 0.6 to separate them. It's a heuristic; tune per corpus/model.
+MIN_SCORE = float(os.getenv("CODEJUDGE_AI_MIN_SCORE", "0.6"))
+
+
+def _envbool(key: str, default: bool) -> bool:
+    v = os.getenv(key)
+    if v is None:
+        return default
+    return v.strip().lower() in ("1", "true", "yes", "on")
+
+
+# Input guardrail: screens each user message before the model runs. Modes:
+#   "off"       - no screening
+#   "heuristic" - fast, deterministic checks (length + a few obvious patterns);
+#                 cheap but limited/bypassable
+#   "llm"        - a model classifies each message (more robust, adds one call
+#                 per user turn)
+# See docs/GUARDRAIL.md for the trade-offs. Legacy 0/1/true/false still map to
+# off/heuristic.
+_GUARDRAIL_RAW = os.getenv("CODEJUDGE_AI_GUARDRAIL",
+                           "heuristic").strip().lower()
+GUARDRAIL_MODE = {
+    "0": "off", "false": "off", "no": "off", "none": "off", "off": "off",
+    "1": "heuristic", "true": "heuristic", "yes": "heuristic", "on": "heuristic", "heuristic": "heuristic",
+    "llm": "llm",
+}.get(_GUARDRAIL_RAW, "heuristic")
+
+# Verbose observability for the local chat REPL: logs each tool/model call and
+# prints OpenTelemetry spans to the console. Off by default (opt-in for learning).
+TRACE_ENABLED = _envbool("CODEJUDGE_AI_TRACE", False)

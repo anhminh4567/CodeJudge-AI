@@ -98,7 +98,7 @@ levels, by how much control you want:
    ```
 
 2. **Customize / embed** — when you want your own routes, auth, CORS, or a
-   *persistent* session store instead of in-memory. See [server.py](server.py)
+   *persistent* session store instead of in-memory. See [server.py](../server.py)
    for a working example: it calls `get_fast_api_app(agents_dir="adk_app",
    web=True)` (all of ADK's endpoints + the dev UI) and adds a custom `/healthz`
    route with a plain FastAPI decorator. Run it and try the custom endpoint:

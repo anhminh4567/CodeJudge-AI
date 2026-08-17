@@ -19,13 +19,27 @@ codejudge_mcp/
 
 ## Tools
 
+Public (read-only):
+
 | Tool | Wraps | Purpose |
 |------|-------|---------|
-| `list_problems(page, size)` | `GET /problems` | List available problems (id + metadata), paged. |
-| `get_problem_spec(problem_id)` | `GET /problems/:id` | Fetch a problem's public spec (mode, signature, limits, sample cases). |
+| `list_problems(page, size)` | `GET /problems` | List published problems (id + metadata), paged. |
+| `get_problem_spec(problem_id)` | `GET /problems/:id` | Fetch a published problem's public spec. |
 
-More tools (`run_submission`, `add_problem`, …) are added as the agent grows;
-each is a `@mcp.tool()` in `server.py`.
+Admin (problem authoring — see [../docs/PROBLEM_AUTHORING.md](../docs/PROBLEM_AUTHORING.md)):
+
+| Tool | Wraps | Purpose |
+|------|-------|---------|
+| `get_problem_status(problem_id)` | `GET /admin/problems/:id` | Admin view: status, all cases, reference solution. |
+| `validate_problem(problem_id)` | `POST .../validate`, polled internally | Run the reference solution for real; pass/fail. |
+| `run_submission(problem_id, language, source_code, cases)` | `POST /submissions/run`, polled internally | Trial-run code against ad-hoc cases; nothing persisted. Dry-run cases/a solution before committing them. |
+| `create_draft_problem(...)` | `POST /admin/problems` | Create a new DRAFT problem. |
+| `add_test_cases(problem_id, cases)` | `POST .../testcases`, looped | Add a batch of cases in one call. |
+| `set_reference_solution(problem_id, language, source_code)` | `PUT .../reference` | Set the answer-key solution. |
+| `publish_problem(problem_id)` | `POST .../publish` | DRAFT → PUBLISHED (gated on a passing validation). |
+| `unpublish_problem(problem_id)` | `POST .../unpublish` | PUBLISHED → DRAFT. |
+
+More tools are added as the agent grows; each is a `@mcp.tool()` in `server.py`.
 
 ## Configuration (env, shared repo-root `.env`)
 

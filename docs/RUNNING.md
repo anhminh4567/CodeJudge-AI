@@ -67,11 +67,36 @@ All three run the same agent; they differ only in interface.
 
 **A) ADK web UI (what you're using) — richest view**
 ```bash
-.venv/Scripts/adk web adk_app/codejudge_assistant
+.venv/Scripts/python -m codejudge_ai.scripts.web
 ```
 Open http://localhost:8000. The `codejudge_assistant` agent is auto-selected.
 The side panel shows the event stream and every tool call, so you can watch the
 RAG retrieval happen. **This is the whole thing running — nothing else to start.**
+
+`scripts/web.py` is a thin wrapper around `adk web` (the `adk` CLI is a separate
+process and doesn't read our `.env` on its own): it reads
+`CODEJUDGE_AI_SESSION_DB_URL` from `config.py` and passes it through as
+`--session_service_uri` automatically, so persistence is picked up without
+retyping a URL by hand. It prints which storage it picked. `--no-persist`
+forces in-memory even if the URL is set; `python -m codejudge_ai.scripts.web
+--port 8010` changes the port. (You can still run `adk web
+adk_app/codejudge_assistant` directly if you don't want persistence.)
+
+Without `CODEJUDGE_AI_SESSION_DB_URL` set, sessions are **in-memory** — every
+restart of the server loses all conversation history, which makes debugging a
+multi-turn conversation painful. To set it up:
+```bash
+pip install -e ".[agent,persist]"   # once: adds sqlalchemy + asyncpg
+```
+```
+# .env
+CODEJUDGE_AI_SESSION_DB_URL=postgresql+asyncpg://user:pass@host:port/dbname
+```
+Use a **dedicated** database for this — not CodeJudge's own — to keep the two
+unrelated. SQLite (`sqlite+aiosqlite:///./sessions.db`, needs `aiosqlite`
+instead of `asyncpg`) is a zero-infrastructure alternative if you don't have a
+Postgres server handy — same benefit, one local file instead of a server.
+`server.py` (the custom FastAPI example) also reads this same var.
 
 **B) ADK terminal REPL**
 ```bash

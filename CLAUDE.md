@@ -34,7 +34,8 @@ map in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); build roadmap in
 [docs/OVERVIEW.md](docs/OVERVIEW.md); how the pieces load & wire in
 [docs/WIRING.md](docs/WIRING.md); the input guardrail in
 [docs/GUARDRAIL.md](docs/GUARDRAIL.md); observability in
-[docs/OBSERVABILITY.md](docs/OBSERVABILITY.md). Summary:
+[docs/OBSERVABILITY.md](docs/OBSERVABILITY.md); problem authoring (Phase 2) in
+[docs/PROBLEM_AUTHORING.md](docs/PROBLEM_AUTHORING.md). Summary:
 
 Three capabilities the AI layer provides:
 1. **Answer visitor questions** — RAG over site docs + ingested PDFs/Word, plus

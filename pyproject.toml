@@ -13,6 +13,7 @@ dependencies = [
     "python-dotenv>=1.0",              # load .env for local runs
     "mcp>=1.10,<2",                    # MCP server (FastMCP); <2 for ADK client compatibility
     "httpx>=0.27",                     # async HTTP client for CodeJudge
+    "pydantic>=2.0",                   # nested MCP tool argument schemas (TestCase, ProblemLimits)
 ]
 
 [project.optional-dependencies]
@@ -21,6 +22,14 @@ dependencies = [
 # (The ADK MCP client also needs `mcp`, which is a core dependency above.)
 agent = [
     "google-adk>=1.0.0",
+]
+# For persistent (non-in-memory) ADK session storage during development. Set
+# CODEJUDGE_AI_SESSION_DB_URL in .env and use `python -m codejudge_ai.scripts.web`
+# (or server.py) -- sessions then survive restarts, which the in-memory default
+# does not. See docs/RUNNING.md.
+persist = [
+    "sqlalchemy>=2,<3",
+    "asyncpg>=0.29",
 ]
 
 [build-system]

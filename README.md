@@ -13,7 +13,7 @@ See the repo root `CLAUDE.md` for the architecture decisions.
 > More docs in [docs/](docs/): [ARCHITECTURE](docs/ARCHITECTURE.md) ·
 > [WIRING](docs/WIRING.md) (how config loads & the agent is found) ·
 > [DEVELOPMENT_PHASES](docs/DEVELOPMENT_PHASES.md) · [GUARDRAIL](docs/GUARDRAIL.md) ·
-> [OBSERVABILITY](docs/OBSERVABILITY.md)
+> [OBSERVABILITY](docs/OBSERVABILITY.md) · [PROBLEM_AUTHORING](docs/PROBLEM_AUTHORING.md)
 
 ## Layout
 

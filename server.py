@@ -22,12 +22,15 @@ import os
 import uvicorn
 from google.adk.cli.fast_api import get_fast_api_app
 
+from codejudge_ai import config
+
 # ADK builds the FastAPI app for us: point it at the agents directory, keep the
-# dev UI on, and (for a real deployment) swap in a persistent session store via
-# session_service_uri instead of the in-memory default.
+# dev UI on, and use a persistent session store when CODEJUDGE_AI_SESSION_DB_URL
+# is set (see docs/RUNNING.md) instead of ADK's in-memory default.
 app = get_fast_api_app(
     agents_dir="adk_app",
     web=True,
+    session_service_uri=config.SESSION_DB_URL or None,
 )
 
 

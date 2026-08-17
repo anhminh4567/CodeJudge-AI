@@ -34,24 +34,42 @@ first read-path test.)
 
 ---
 
-## Phase 2 — Problem authoring (admin, human-in-the-loop)   ⬜ next
+## Phase 2 — Problem authoring (admin, human-in-the-loop)   🔨 in progress
 
 **Goal:** as an admin you say "add a problem about X"; the agent proposes one,
-you approve, it drafts example + edge test cases, you accept/reject, and only
-then does it create the problem through CodeJudge's API. Every write is gated by
-your approval — the agent never persists anything unilaterally.
+you approve, it drafts example + edge test cases, you accept/reject, sets a
+reference solution, runs it for real to prove the cases are correct, and only
+then publishes. Every mutating step is gated by your approval.
+
+CodeJudge's admin/drafting endpoints (S9's staging→verify→ready idea) landed
+sooner than expected — the other agent shipped the full draft → validate →
+publish lifecycle, including running a reference solution in the real sandbox as
+the correctness gate. Details: [PROBLEM_AUTHORING.md](PROBLEM_AUTHORING.md).
 
 | Step | What | Notes |
 |------|------|-------|
-| S5 | Read tools via MCP: `list_problems`, `list_languages` (+ existing `get_problem_spec`) | so the agent sees what already exists before proposing |
-| S6 | **Draft step** — agent proposes a problem (statement, mode, signature, limits), then returns to you and waits | no writes yet; pure proposal |
-| S7 | **Test-case sub-loop** — on approval, agent drafts sample + edge cases, returns for accept/reject/tweak | iterative until you're happy |
-| S8 | **Persist on accept** — agent calls MCP `add_problem` + `commit_test_case` → real problem via `POST /problems`, `POST /problems/:id/testcases` | first real writes |
-| S9 | **(Future) staging → verify → ready** — create problem as *staging*, run a reference solution through `run_submission`, confirm all cases pass, then flip to *ready* | ⛔ needs NEW CodeJudge endpoints (staging state, reference-solution run). Flag to the other agent; don't fake it. |
+| S5 | Read tools via MCP: `list_problems`, `get_problem_status` (+ existing `get_problem_spec`) | so the agent sees what already exists before proposing |
+| S6 | **Draft step** — `problem_author` sub-agent proposes a problem, `create_draft_problem` is gated on human approval | ✅ |
+| S7 | **Test-case batch** — dry-run candidates via `run_submission` (nothing persisted, no approval needed), then `add_test_cases` (loops the endpoint, one approval per batch, not per case) | ✅ |
+| S8 | **Persist + verify** — `set_reference_solution`, `validate_problem` (runs the reference for real, polls to completion), `publish_problem`/`unpublish_problem` — all real writes, all gated except validate (gate is a chat-approval instruction, not a tool-level mechanism) | ✅ sub-agent transfer verified; live run against CodeJudge and reliability of the chat-approval gate both pending |
+| S9 | Staging → verify → ready | ✅ **this is what S8 turned out to be** — CodeJudge's DRAFT/PUBLISHED + validate gate covers it; no separate step needed |
 
-New MCP tools this phase adds: `list_problems`, `list_languages`, `add_problem`,
-`commit_test_case` (and later `run_submission`). Each is one file in
-`codejudge_mcp/server.py` (each tool is a `@mcp.tool()`).
+Tools added this phase (`codejudge_mcp/server.py`, each a `@mcp.tool()`):
+`get_problem_status`, `validate_problem`, `run_submission`,
+`create_draft_problem`, `add_test_cases`, `set_reference_solution`,
+`publish_problem`, `unpublish_problem`. A new sub-agent, `problem_author`
+(`codejudge_ai/agent/problem_author.py`), owns them; `root_agent` transfers to it
+for authoring requests. `run_submission` (wrapping CodeJudge's later-added
+"Run mode", `POST /submissions/run`) lets the agent dry-run a candidate
+solution against candidate cases before committing either — see
+[PROBLEM_AUTHORING.md](PROBLEM_AUTHORING.md#dry-running-before-you-commit-run_submission).
+
+**Remaining before Phase 2 is "done":** a real end-to-end run against a live
+CodeJudge (draft → cases → reference → validate → publish), and checking that
+the chat-approval gate (see PROBLEM_AUTHORING.md's "How approval works") holds
+up in practice — no tool-level mechanism backs it up anymore, so this is the
+one thing actually worth stress-testing. `chat.py` now works for authoring
+conversations too, since approval is just a normal reply.
 
 ---
 
@@ -61,12 +79,17 @@ New MCP tools this phase adds: `list_problems`, `list_languages`, `add_problem`,
 cases, runs them through CodeJudge's real sandbox, and reasons over the actual
 results to judge robustness.
 
-- Add MCP `run_submission` (POST `/submissions` + poll `GET /submissions/:id`).
-- Agent loop: hypothesize edge cases → run → observe verdicts → refine.
+- No new MCP tool needed for the core loop — `run_submission` (built in Phase 2
+  for authoring dry-runs, wrapping `POST /submissions/run`) already does exactly
+  this shape: run arbitrary code against client-supplied cases, scored per-case,
+  nothing persisted. Grading a user's submission against agent-generated
+  adversarial cases is the same call with a different caller/purpose.
+- Agent loop: hypothesize edge cases → run_submission → observe verdicts → refine.
 - **Hard rule (D5): the LLM never executes code itself** — all execution goes
-  through CodeJudge's judge/sandbox. Non-negotiable.
-- Likely ⛔ on some CodeJudge admin endpoints (ad-hoc runs without persisting a
-  problem); flag as we hit them.
+  through CodeJudge's judge/sandbox via run_submission. Non-negotiable.
+- Open question: does the adversarial-grading agent need its own MCP tool
+  scoping/permissions distinct from problem_author's, or can it share
+  run_submission's toolset? Decide when this phase starts.
 
 ---
 
@@ -98,7 +121,8 @@ Not needed for the PoC; captured so we don't forget:
 | (server) | Example FastAPI server with /healthz | ✅ committed |
 | (mcp-python) | Rewrite MCP server in Python (drop Go; revises D2) | ✅ committed |
 | C2 | S4 — live MCP tools wired into the agent (the PoC) + `list_problems` | ✅ committed |
-| (hardening) | Observability hooks (callbacks/plugin/OTel) + input guardrail + RAG min-score + instruction fix | pending review |
+| (hardening) | Observability hooks (callbacks/plugin/OTel) + input guardrail + RAG min-score + instruction fix | ✅ committed |
+| D1 | S5-S8 — problem_author sub-agent, 7 admin MCP tools, require_confirmation gates | pending review |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

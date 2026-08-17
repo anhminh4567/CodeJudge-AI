@@ -1,14 +1,19 @@
-"""The root agent (S4): the PoC assistant.
+"""The root agent: the visitor-facing Q&A assistant, plus a hand-off to the
+problem-authoring sub-agent for admin tasks.
 
-One LlmAgent with two kinds of tools:
+Two kinds of tools on the root agent itself:
 - `search_ingested_docs` (RAG) — answers "how does CodeJudge work" from the
   ingested documentation.
 - live tools over MCP (`list_problems`, `get_problem_spec`) — answer questions
   about the *actual* problems on a running CodeJudge, via codejudge-mcp.
 
-The point of the PoC is that the model *chooses* per question which source to
-use — that's real, model-driven tool selection across two genuinely different
-sources (local docs vs. a live service), tied together by MCP and RAG.
+The model *chooses* per question which source to use — that's the Phase 1 PoC:
+real, model-driven tool selection across two genuinely different sources.
+
+For anything about creating/authoring/publishing a problem, the model transfers
+to `problem_author` (see problem_author.py) — ADK's `sub_agents` mechanism adds a
+`transfer_to_agent` tool automatically, and the model decides to use it based on
+`problem_author`'s `description`. See docs/PROBLEM_AUTHORING.md.
 """
 
 from __future__ import annotations
@@ -19,6 +24,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 
 from .. import config
 from .guardrail import input_guardrail_callback
+from .problem_author import problem_author
 from .tools import search_ingested_docs
 
 _INSTRUCTION = """\
@@ -37,6 +43,10 @@ You have two kinds of tools — choose the one that fits the question:
    problem's mode, signature, limits, or sample cases. Use `list_problems` to see
    what's available and `get_problem_spec` for one problem's details. These
    reflect the live service, not the docs.
+
+If the admin wants to CREATE, AUTHOR, DRAFT, or PUBLISH a new problem, transfer
+to the `problem_author` agent — that's its whole job, and it knows the full
+draft -> validate -> publish workflow. Don't try to do it yourself.
 
 Rules:
 - Use exactly the tool(s) that fit the question — do NOT call both kinds for the
@@ -67,5 +77,6 @@ root_agent = LlmAgent(
     model=config.GEN_MODEL,
     instruction=_INSTRUCTION,
     tools=[search_ingested_docs, _codejudge_mcp],
+    sub_agents=[problem_author],
     before_model_callback=_before_model,
 )

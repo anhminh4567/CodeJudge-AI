@@ -43,6 +43,13 @@ EMBED_MODEL = os.getenv("CODEJUDGE_AI_EMBED_MODEL", "gemini-embedding-001")
 # Use the "-latest" alias so we track the current Flash model; pinned versions
 # like gemini-2.5-flash get retired and start returning 404 for new users.
 GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-flash-latest")
+# Model for the problem_author sub-agent specifically. Defaults to GEN_MODEL
+# (no cost change out of the box), but authoring is a longer multi-step
+# tool-orchestration task than simple Q&A -- approval for mutating tools is
+# enforced only by the instruction (ask, then wait for a "yes"), so a
+# cheap/Lite model can skip the ask and call a mutating tool immediately (see
+# docs/PROBLEM_AUTHORING.md). Set this to a stronger model if that happens.
+AUTHOR_MODEL = os.getenv("CODEJUDGE_AI_AUTHOR_MODEL", GEN_MODEL)
 
 # ADK (google-adk) builds its own genai client from environment variables rather
 # than an explicit key. Mirror our key into the name it reads so the agent "just
@@ -97,3 +104,10 @@ GUARDRAIL_MODE = {
 # Verbose observability for the local chat REPL: logs each tool/model call and
 # prints OpenTelemetry spans to the console. Off by default (opt-in for learning).
 TRACE_ENABLED = _envbool("CODEJUDGE_AI_TRACE", False)
+
+# Persistent ADK session storage (dev/debugging only) -- a SQLAlchemy async URL,
+# e.g. postgresql+asyncpg://user:pass@host:port/dbname. Empty means ADK's
+# in-memory default (sessions lost on every restart). Needs the "persist" extra
+# (pip install -e ".[agent,persist]") for the driver. Used by
+# scripts/web.py and server.py; see docs/RUNNING.md.
+SESSION_DB_URL = os.getenv("CODEJUDGE_AI_SESSION_DB_URL", "")

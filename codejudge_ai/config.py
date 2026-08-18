@@ -51,6 +51,11 @@ GEN_MODEL = os.getenv("CODEJUDGE_AI_GEN_MODEL", "gemini-flash-latest")
 # docs/PROBLEM_AUTHORING.md). Set this to a stronger model if that happens.
 AUTHOR_MODEL = os.getenv("CODEJUDGE_AI_AUTHOR_MODEL", GEN_MODEL)
 
+# Model for the adversarial_grader sub-agent. Defaults to GEN_MODEL, same
+# convention as AUTHOR_MODEL. Every tool here is read-only, so a weak model's
+# failure mode is worse adversarial cases, not an unauthorized write.
+ADVERSARIAL_MODEL = os.getenv("CODEJUDGE_AI_ADVERSARIAL_MODEL", GEN_MODEL)
+
 # ADK (google-adk) builds its own genai client from environment variables rather
 # than an explicit key. Mirror our key into the name it reads so the agent "just
 # works" with the single GEMINI_API_KEY the rest of the project uses. With an API

@@ -73,23 +73,32 @@ the ask — but no longer a blocker.
 
 ---
 
-## Phase 3 — AI grading with adversarial cases   ⬜ next up ← we are here
+## Phase 3 — AI grading with adversarial cases   🔨 in progress ← we are here
 
 **Goal:** a genuine agent loop that, for a submission, generates adversarial test
 cases, runs them through CodeJudge's real sandbox, and reasons over the actual
-results to judge robustness.
+results to judge robustness. Details: [ADVERSARIAL_GRADING.md](ADVERSARIAL_GRADING.md).
 
-- No new MCP tool needed for the core loop — `run_submission` (built in Phase 2
-  for authoring dry-runs, wrapping `POST /submissions/run`) already does exactly
-  this shape: run arbitrary code against client-supplied cases, scored per-case,
-  nothing persisted. Grading a user's submission against agent-generated
-  adversarial cases is the same call with a different caller/purpose.
-- Agent loop: hypothesize edge cases → run_submission → observe verdicts → refine.
+| Step | What | Notes |
+|------|------|-------|
+| S10 | `get_submission` MCP tool (public, read-only) | resolves a `submission_id` to `problemId`/`language`/`sourceCode` + status/verdict/cases, wrapping `GET /submissions/:id` (the client function already existed, just wasn't exposed as a tool) |
+| S11 | `adversarial_grader` sub-agent | own minimal toolset (`get_problem_spec`, `get_submission`, `run_submission`) — deliberately excludes `get_problem_status`/anything that would expose a reference solution. No approval gate: every tool is read-only or non-persisting |
+| S12 | `root_agent` wiring | added to `sub_agents`, instruction routes grading/testing/stress-testing requests here alongside the existing authoring route to `problem_author` |
+| S12v | Live end-to-end verification | ✅ ran manually via `adk web` against a live CodeJudge — hand-off + tool sequence + report all worked; quality is average (prompting needs more refinement, deferred) and the deliberately-buggy-submission stress test is still pending — see "Testing status" in ADVERSARIAL_GRADING.md |
+
+Resolved: the "own MCP tool scoping vs. share problem_author's" open question
+— `adversarial_grader` gets its own toolset, structurally excluding
+`get_problem_status` so it's incapable of reaching a reference solution, not
+just instructed not to (see "Where the answer key comes from" in
+ADVERSARIAL_GRADING.md for how it derives expected outputs without one).
+
+- No new *execution* tool was needed — `run_submission` (built in Phase 2 for
+  authoring dry-runs, wrapping `POST /submissions/run`) already does exactly
+  this shape: run arbitrary code against client-supplied cases, scored
+  per-case, nothing persisted. `get_submission` (S10) is the one genuinely new
+  tool, and it's for *intake* (resolving what to grade), not grading itself.
 - **Hard rule (D5): the LLM never executes code itself** — all execution goes
   through CodeJudge's judge/sandbox via run_submission. Non-negotiable.
-- Open question: does the adversarial-grading agent need its own MCP tool
-  scoping/permissions distinct from problem_author's, or can it share
-  run_submission's toolset? Decide when this phase starts.
 
 ---
 
@@ -123,6 +132,8 @@ Not needed for the PoC; captured so we don't forget:
 | C2 | S4 — live MCP tools wired into the agent (the PoC) + `list_problems` | ✅ committed |
 | (hardening) | Observability hooks (callbacks/plugin/OTel) + input guardrail + RAG min-score + instruction fix | ✅ committed |
 | D1 | S5-S8 — problem_author sub-agent, 8 admin MCP tools (incl. `run_submission` dry-run), chat-approval convention for mutating tools (superseded `require_confirmation` before this ever shipped), persistent ADK session storage | ✅ committed (`febbdd1`) |
+| D2 | Docs-only: mark Phase 2 done after live end-to-end verification | ✅ committed (`0e6c735`) |
+| E1 | S10-S12 — `get_submission` MCP tool, `adversarial_grader` sub-agent, `root_agent` wiring | pending review |
 
 See `OVERVIEW.md` for a plain-language tour of the Python project,
 and the repo root `CLAUDE.md` for the locked architecture decisions.

@@ -9,7 +9,7 @@ Tools split into two groups (see codejudge_ai/agent/problem_author.py — the
 "mutating" ones aren't gated at the tool level; that agent's instruction
 requires it to ask the admin for a plain "yes" in chat before calling them):
 
-  read-only, public:  list_problems, get_problem_spec
+  read-only, public:  list_problems, get_problem_spec, get_submission
   read-only, admin:   get_problem_status, validate_problem, run_submission
   mutating, admin:    create_draft_problem, add_test_cases,
                       set_reference_solution, publish_problem, unpublish_problem
@@ -114,6 +114,44 @@ async def get_problem_spec(problem_id: str) -> dict:
         "entryFunc": data.get("entryFunc"),
         "limits": data.get("limits"),
         "sampleCases": data.get("sampleCases", []),
+    }
+
+
+@mcp.tool()
+async def get_submission(submission_id: str) -> dict:
+    """Look up a previous submission or run: which problem, language, and
+    source code it was, plus its status/verdict/per-case results.
+
+    Use this to grade a submission someone refers to by id (e.g. "grade my
+    submission abc123") instead of asking them to re-paste code they already
+    sent to CodeJudge. This endpoint has no auth today (like every other one)
+    and this tool mutates nothing.
+
+    Args:
+        submission_id: The id of a previously created submission or run.
+    """
+    if not submission_id:
+        return {"error": "submission_id is required"}
+    try:
+        data = await codejudge_client.get_submission(submission_id)
+    except CodeJudgeError as exc:
+        return {"error": str(exc)}
+    except Exception as exc:
+        return {"error": f"could not reach CodeJudge: {exc}"}
+
+    # problemId/language/sourceCode are expected top-level on the submission
+    # record (mirroring what POST /submissions/run accepts); .get() means a
+    # caller sees None rather than an error if that assumption is ever wrong,
+    # and adversarial_grader's instruction has a fallback (ask the user to
+    # supply whatever's missing) for exactly that case.
+    return {
+        "id": data.get("id"),
+        "problemId": data.get("problemId"),
+        "language": data.get("language"),
+        "sourceCode": data.get("sourceCode"),
+        "status": (data.get("status") or {}).get("code"),
+        "verdict": (data.get("verdict") or {}).get("code"),
+        "cases": data.get("cases", []),
     }
 
 

@@ -14,6 +14,10 @@ For anything about creating/authoring/publishing a problem, the model transfers
 to `problem_author` (see problem_author.py) — ADK's `sub_agents` mechanism adds a
 `transfer_to_agent` tool automatically, and the model decides to use it based on
 `problem_author`'s `description`. See docs/PROBLEM_AUTHORING.md.
+
+For grading/stress-testing an existing submission, the model transfers to
+`adversarial_grader` (see adversarial_grader.py) the same way. See
+docs/ADVERSARIAL_GRADING.md.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from google.adk.tools.mcp_tool import StreamableHTTPConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 
 from .. import config
+from .adversarial_grader import adversarial_grader
 from .guardrail import input_guardrail_callback
 from .problem_author import problem_author
 from .tools import search_ingested_docs
@@ -47,6 +52,11 @@ You have two kinds of tools — choose the one that fits the question:
 If the admin wants to CREATE, AUTHOR, DRAFT, or PUBLISH a new problem, transfer
 to the `problem_author` agent — that's its whole job, and it knows the full
 draft -> validate -> publish workflow. Don't try to do it yourself.
+
+If someone wants an existing submission or piece of code GRADED, TESTED, or
+STRESS-TESTED against edge cases for robustness (not authoring anything new),
+transfer to the `adversarial_grader` agent — that's its whole job. Don't try
+to generate test cases or judge correctness yourself.
 
 Rules:
 - Use exactly the tool(s) that fit the question — do NOT call both kinds for the
@@ -77,6 +87,6 @@ root_agent = LlmAgent(
     model=config.GEN_MODEL,
     instruction=_INSTRUCTION,
     tools=[search_ingested_docs, _codejudge_mcp],
-    sub_agents=[problem_author],
+    sub_agents=[problem_author, adversarial_grader],
     before_model_callback=_before_model,
 )

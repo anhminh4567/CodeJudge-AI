@@ -25,6 +25,7 @@ Public (read-only):
 |------|-------|---------|
 | `list_problems(page, size)` | `GET /problems` | List published problems (id + metadata), paged. |
 | `get_problem_spec(problem_id)` | `GET /problems/:id` | Fetch a published problem's public spec. |
+| `get_submission(submission_id)` | `GET /submissions/:id` | Look up a submission/run's problem, language, source code, and verdict — used by adversarial grading to resolve a submission id ([../docs/ADVERSARIAL_GRADING.md](../docs/ADVERSARIAL_GRADING.md)). |
 
 Admin (problem authoring — see [../docs/PROBLEM_AUTHORING.md](../docs/PROBLEM_AUTHORING.md)):
 

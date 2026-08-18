@@ -177,13 +177,17 @@ possible.
 
 ## Testing status
 
-Verified without CodeJudge running: sub-agent transfer, and (earlier) that
-`create_draft_problem` no longer bundles unverified cases. **Not yet
-verified**: that the model reliably asks-and-waits before every mutating call
-under the new conversational-only approval (see "How approval works" above),
-and an actual `run_submission`/`validate_problem` run and a real publish —
-both need CodeJudge up. See [RUNNING.md](RUNNING.md) for the 3-process
-topology.
+Verified end-to-end against a live CodeJudge via `adk web`: propose → approve
+draft → dry-run candidates via `run_submission` → commit (`add_test_cases`,
+`set_reference_solution`) → `validate_problem` → publish, with the
+chat-approval convention (ask, wait for "yes", then call) holding up through
+every mutating step of that run. Also verified earlier: sub-agent transfer,
+and that `create_draft_problem` no longer bundles unverified cases.
+
+Not a platform guarantee, though — one clean run doesn't rule out a future
+model skipping the ask under different phrasing or pressure. Worth an
+occasional spot-check, especially before pointing a new/cheaper `AUTHOR_MODEL`
+at this. See [RUNNING.md](RUNNING.md) for the 3-process topology.
 
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [GUARDRAIL.md](GUARDRAIL.md) (the
 same input guardrail also runs on `problem_author`), [OBSERVABILITY.md](OBSERVABILITY.md).

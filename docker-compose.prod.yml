@@ -28,6 +28,13 @@ services:
       MCP_PORT: "8081"
       MCP_PATH: /mcp
       CODEJUDGE_BASE_URL: ${CODEJUDGE_BASE_URL}
+    extra_hosts:
+      # CodeJudge runs in its OWN compose project, so it isn't on this
+      # network -- and `localhost` inside a container is the container, not
+      # the VPS. This makes the host reachable, so CODEJUDGE_BASE_URL can be
+      # http://host.docker.internal:8888 when CodeJudge is on the same VPS.
+      # (If it's on another host, just use that address instead.)
+      - "host.docker.internal:host-gateway"
     # Deliberately no `ports:` -- only reachable by other containers on this
     # compose network, at http://mcp:8081/mcp. Neither this nor CodeJudge's
     # admin API has auth today, so it stays off the host/internet entirely.

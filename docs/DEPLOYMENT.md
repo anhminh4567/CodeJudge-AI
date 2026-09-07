@@ -147,9 +147,14 @@ IMAGE_TAG=latest
 ```
 
 - `GEMINI_API_KEY` — required, real secret.
-- `CODEJUDGE_BASE_URL` — wherever `CodeJudge` ends up (or a placeholder if
-  it's not deployed yet — `codejudge_mcp` degrades to an `"error"` field per
-  tool call, not a crash, so this doesn't block anything).
+- `CODEJUDGE_BASE_URL` — wherever `CodeJudge` ends up. **If it's on the same
+  VPS, this must be `http://host.docker.internal:8888`, not
+  `http://localhost:8888`** — `localhost` inside the `mcp` container is the
+  container itself, not the VPS host. (CodeJudge runs in its own separate
+  compose project, so it isn't on this stack's network either; the
+  `extra_hosts` entry on `mcp` is what makes the host reachable.) If
+  CodeJudge isn't deployed yet, any placeholder is fine — `codejudge_mcp`
+  degrades to an `"error"` field per tool call, not a crash.
 - `CODEJUDGE_AI_SESSION_DB_URL` — from step 3 above. If `host.docker.internal`
   doesn't end up being how Postgres is reached, use whatever address does.
 - `CODEJUDGE_AI_GUARDRAIL` / `*_AUTHOR_MODEL` / `*_ADVERSARIAL_MODEL` —

@@ -68,6 +68,16 @@ if GEMINI_API_KEY and not os.getenv("GOOGLE_API_KEY"):
 # serves at the /mcp path by default.
 MCP_URL = os.getenv("CODEJUDGE_MCP_URL", "http://localhost:8081/mcp")
 
+# CORS origins allowed to call the agent's HTTP API (server.py -> ADK's
+# get_fast_api_app). A browser client on a different origin -- CodeJudge-UI's
+# chat panel, say -- can't call us at all without this. Comma-separated, or "*"
+# for any origin. Defaults to "*": there's no auth on this service yet, so
+# origin-restricting it would be security theater, not protection. Tighten to
+# real origins (e.g. "https://ui.example.com") once auth exists.
+CORS_ORIGINS = [
+    o.strip() for o in os.getenv("CODEJUDGE_AI_CORS_ORIGINS", "*").split(",") if o.strip()
+]
+
 # Chunking parameters (characters, not tokens — a simple, predictable proxy).
 CHUNK_SIZE = int(os.getenv("CODEJUDGE_AI_CHUNK_SIZE", "1200"))
 CHUNK_OVERLAP = int(os.getenv("CODEJUDGE_AI_CHUNK_OVERLAP", "200"))

@@ -17,7 +17,8 @@ See the repo root `CLAUDE.md` for the architecture decisions.
 > [WIRING](docs/WIRING.md) (how config loads & the agent is found) ·
 > [DEVELOPMENT_PHASES](docs/DEVELOPMENT_PHASES.md) · [GUARDRAIL](docs/GUARDRAIL.md) ·
 > [OBSERVABILITY](docs/OBSERVABILITY.md) · [PROBLEM_AUTHORING](docs/PROBLEM_AUTHORING.md) ·
-> [ADVERSARIAL_GRADING](docs/ADVERSARIAL_GRADING.md) · [DEPLOYMENT](docs/DEPLOYMENT.md)
+> [ADVERSARIAL_GRADING](docs/ADVERSARIAL_GRADING.md) · [DEPLOYMENT](docs/DEPLOYMENT.md) ·
+> [HTTP_API](docs/HTTP_API.md) (how a UI calls the agent + streams answers)
 
 ## Layout
 

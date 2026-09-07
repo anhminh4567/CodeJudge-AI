@@ -27,10 +27,13 @@ from codejudge_ai import config
 # ADK builds the FastAPI app for us: point it at the agents directory, keep the
 # dev UI on, and use a persistent session store when CODEJUDGE_AI_SESSION_DB_URL
 # is set (see docs/RUNNING.md) instead of ADK's in-memory default.
+# allow_origins wires ADK's CORS middleware -- without it a browser client on a
+# different origin (CodeJudge-UI's chat panel) can't call this API at all.
 app = get_fast_api_app(
     agents_dir="adk_app",
     web=True,
     session_service_uri=config.SESSION_DB_URL or None,
+    allow_origins=config.CORS_ORIGINS,
 )
 
 

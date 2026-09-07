@@ -46,7 +46,7 @@ More tools are added as the agent grows; each is a `@mcp.tool()` in `server.py`.
 
 | Var | Default | Meaning |
 |-----|---------|---------|
-| `CODEJUDGE_BASE_URL` | `http://localhost:8080` | Base URL of the running CodeJudge API. |
+| `CODEJUDGE_BASE_URL` | `http://localhost:8888` | Base URL of the running CodeJudge API (8888 is CodeJudge's own default). |
 | `MCP_HOST` | `127.0.0.1` | Address the MCP server binds. |
 | `MCP_PORT` | `8081` | Port the MCP server listens on. |
 | `MCP_PATH` | `/mcp` | Streamable HTTP mount path. |

@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()  # share the repo-root .env; real env vars still win
 
 # Base URL of the running CodeJudge API this server fronts.
-CODEJUDGE_BASE_URL = os.getenv("CODEJUDGE_BASE_URL", "http://localhost:8080").rstrip("/")
+# 8888 is CodeJudge's own default (its internal/config default + config.yaml +
+# docker-compose port mapping all agree on 8888).
+CODEJUDGE_BASE_URL = os.getenv("CODEJUDGE_BASE_URL", "http://localhost:8888").rstrip("/")
 
 # Where this MCP server listens (Streamable HTTP). The agent connects to
 # http://{MCP_HOST}:{MCP_PORT}{MCP_PATH}.

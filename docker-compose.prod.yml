@@ -1,0 +1,67 @@
+# VPS deployment. Two services: mcp (talks to CodeJudge, no host port --
+# nothing but `ai` ever needs to reach it) and ai (the ADK HTTP server, the
+# only thing aaPanel's reverse proxy points at).
+#
+# No postgres service here, deliberately -- mirrors how CodeJudge's own
+# docker-compose.prod.yml does it (see its docs/DEPLOY_COMPOSE.md): the VPS
+# has ONE shared Postgres instance, managed outside compose (installed
+# directly on the host, e.g. via aaPanel), not a dedicated container per
+# service. `ai` gets its own database (`codejudge_ai_sessions`) and its own
+# credentials on that same instance -- shared server, separate DB, never
+# CodeJudge's own `codejudge` database or credentials. The full connection
+# string is supplied externally via CODEJUDGE_AI_SESSION_DB_URL in the
+# deploy .env (see docs/DEPLOYMENT.md) -- this file doesn't need to know
+# whether that's host.docker.internal, a private IP, or something else.
+#
+# Local build+run:  docker compose -f docker-compose.prod.yml up -d --build
+# VPS (pulls the pre-built image instead of building): see the `cd.yml`
+# workflow and docs/DEPLOYMENT.md.
+
+services:
+  mcp:
+    build: .
+    image: ${CODEJUDGE_AI_IMAGE:-codejudge-ai}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["python", "-m", "codejudge_mcp"]
+    environment:
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8081"
+      MCP_PATH: /mcp
+      CODEJUDGE_BASE_URL: ${CODEJUDGE_BASE_URL}
+    # Deliberately no `ports:` -- only reachable by other containers on this
+    # compose network, at http://mcp:8081/mcp. Neither this nor CodeJudge's
+    # admin API has auth today, so it stays off the host/internet entirely.
+
+  ai:
+    build: .
+    image: ${CODEJUDGE_AI_IMAGE:-codejudge-ai}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["python", "server.py"]
+    depends_on:
+      - mcp
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      CODEJUDGE_MCP_URL: http://mcp:8081/mcp
+      # Full DSN supplied externally (deploy .env) -- points at the shared
+      # Postgres instance's `codejudge_ai_sessions` database, e.g.
+      # postgresql+asyncpg://codejudge_ai:<pass>@host.docker.internal:5432/codejudge_ai_sessions
+      # See docs/DEPLOYMENT.md for how that host/user/db get set up.
+      CODEJUDGE_AI_SESSION_DB_URL: ${CODEJUDGE_AI_SESSION_DB_URL}
+      CODEJUDGE_AI_GUARDRAIL: ${CODEJUDGE_AI_GUARDRAIL:-heuristic}
+      CODEJUDGE_AI_AUTHOR_MODEL: ${CODEJUDGE_AI_AUTHOR_MODEL:-}
+      CODEJUDGE_AI_ADVERSARIAL_MODEL: ${CODEJUDGE_AI_ADVERSARIAL_MODEL:-}
+      PORT: "8000"
+    extra_hosts:
+      # Lets the container reach a Postgres instance installed directly on
+      # the VPS host (the likely case with aaPanel) via host.docker.internal.
+      # Harmless no-op if CODEJUDGE_AI_SESSION_DB_URL points elsewhere instead.
+      - "host.docker.internal:host-gateway"
+    ports:
+      # Bound to loopback only -- aaPanel's Nginx reverse-proxies the domain
+      # to this; it never needs to be reachable on the host's public IP.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Populated by a manual, occasional step (see docs/DEPLOYMENT.md) --
+      # sync_docs/ingest need the sibling CodeJudge repo's docs + a Gemini
+      # call, neither of which belongs in the image build or CI.
+      - ./rag_store:/app/codejudge_ai/rag/store

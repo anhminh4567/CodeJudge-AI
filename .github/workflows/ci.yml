@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: pip install -e ".[agent,persist]"
+
+      - name: Import + wiring smoke check
+        # The same style of check run by hand throughout development: agents
+        # build, sub-agent wiring is intact, all MCP tools register. No live
+        # CodeJudge or Gemini call needed -- construction only.
+        run: |
+          python -c "
+          import asyncio
+          from codejudge_ai.agent.root_agent import root_agent
+          from codejudge_mcp.server import mcp
+
+          sub_agents = [a.name for a in root_agent.sub_agents]
+          assert 'problem_author' in sub_agents, sub_agents
+          assert 'adversarial_grader' in sub_agents, sub_agents
+
+          tools = asyncio.run(mcp.list_tools())
+          assert len(tools) == 11, [t.name for t in tools]
+
+          print('OK -- sub_agents:', sub_agents)
+          print('OK -- mcp tools:', sorted(t.name for t in tools))
+          "

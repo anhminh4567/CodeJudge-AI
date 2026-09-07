@@ -5,15 +5,19 @@ agent that answers questions and helps author problems. It talks to CodeJudge
 only through `codejudge-mcp`, and to Gemini directly for embeddings/generation.
 See the repo root `CLAUDE.md` for the architecture decisions.
 
+> **Just want the commands? [startup.md](startup.md)** — prereqs, what to start
+> for which scenario, ports, how to stop.
+>
 > **New here? Read [docs/OVERVIEW.md](docs/OVERVIEW.md) first** — a plain-language
 > tour of what RAG/ADK are, what each folder does, and how to run things. For the
-> exact "what do I start and when" steps, see [docs/RUNNING.md](docs/RUNNING.md).
+> *why and when* behind each process, see [docs/RUNNING.md](docs/RUNNING.md).
 > This README is the terse command reference.
 >
 > More docs in [docs/](docs/): [ARCHITECTURE](docs/ARCHITECTURE.md) ·
 > [WIRING](docs/WIRING.md) (how config loads & the agent is found) ·
 > [DEVELOPMENT_PHASES](docs/DEVELOPMENT_PHASES.md) · [GUARDRAIL](docs/GUARDRAIL.md) ·
-> [OBSERVABILITY](docs/OBSERVABILITY.md) · [PROBLEM_AUTHORING](docs/PROBLEM_AUTHORING.md)
+> [OBSERVABILITY](docs/OBSERVABILITY.md) · [PROBLEM_AUTHORING](docs/PROBLEM_AUTHORING.md) ·
+> [ADVERSARIAL_GRADING](docs/ADVERSARIAL_GRADING.md) · [DEPLOYMENT](docs/DEPLOYMENT.md)
 
 ## Layout
 
@@ -71,7 +75,7 @@ and [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
 ## MCP server
 
 ```bash
-python -m codejudge_mcp        # serves http://127.0.0.1:8081/mcp (needs CodeJudge on :8080 for live data)
+python -m codejudge_mcp        # serves http://127.0.0.1:8081/mcp (needs CodeJudge on :8888 for live data)
 ```
 
 ## Setup

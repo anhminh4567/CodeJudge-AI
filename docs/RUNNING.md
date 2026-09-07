@@ -155,10 +155,10 @@ running CodeJudge through the MCP server. To use them, run three processes:
 
 ```bash
 # terminal 1 - CodeJudge (its own repo; we only ever READ it)
-#   run per CodeJudge's own instructions, exposes http://localhost:8080
+#   run per CodeJudge's own startup.md, exposes http://localhost:8888
 
 # terminal 2 - the MCP server (fronts CodeJudge for the agent)
-.venv/Scripts/python -m codejudge_mcp    # serves http://127.0.0.1:8081/mcp, talks to CodeJudge :8080
+.venv/Scripts/python -m codejudge_mcp    # serves http://127.0.0.1:8081/mcp, talks to CodeJudge :8888
 
 # terminal 3 - the agent (as in Step 2); it calls the MCP server over HTTP
 ```
